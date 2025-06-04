@@ -4,6 +4,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { ReduxProvider } from "@/components/ReduxProvider";
 import { ThemeProvider, ThemeSynchronizer } from "@/components/ThemeProvider";
+import { SiteHeader } from "@/components/Header";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -41,6 +42,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ThemeSynchronizer />
+            <SiteHeader/>
             {children}
           </ThemeProvider>
         </ReduxProvider>

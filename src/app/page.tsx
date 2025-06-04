@@ -1,4 +1,4 @@
-import { ThemeToggleButton } from "@/components/ThemeToggleButton"; // Ajustez
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 
 export default function HomePage() {
   return (

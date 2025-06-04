@@ -1,46 +1,50 @@
-// src/components/ThemeToggleButton.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react'; // Importer useState et useEffect
+import React, { useState, useEffect } from "react";
 import { useTheme as useNextTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
+import clsx from "clsx";
 
 export function ThemeToggleButton() {
   const { theme, setTheme, resolvedTheme } = useNextTheme();
-  const [mounted, setMounted] = useState(false); // État pour suivre le montage
+  const [mounted, setMounted] = useState(false);
 
-  // useEffect se lance uniquement côté client, après le montage
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Si le composant n'est pas encore monté (côté serveur ou avant l'hydratation client),
-  // ne rien rendre ou rendre un placeholder pour éviter le mismatch.
-  // Rendre un bouton vide mais de même taille peut éviter les sauts de layout (CLS).
   if (!mounted) {
     return (
-        <Button variant="outline" size="icon" disabled>
-            <Sun className="h-[1.2rem] w-[1.2rem]" /> {/* Ou une icône générique/vide */}
-        </Button>
+      <button
+        disabled
+        className="h-9 w-9 rounded-xl bg-muted text-muted-foreground opacity-70"
+      >
+        <Sun className="h-4 w-4 mx-auto" />
+      </button>
     );
-    // Ou simplement `return null;` si vous préférez ne rien afficher avant l'hydratation
   }
 
-  const currentAppliedTheme = resolvedTheme || theme; // resolvedTheme peut être undefined au début
-
-  const toggle = () => {
-    setTheme(currentAppliedTheme === 'dark' ? 'light' : 'dark');
-  };
+  const isDark = (resolvedTheme || theme) === "dark";
 
   return (
-    <Button variant="outline" size="icon" onClick={toggle}>
-      {currentAppliedTheme === 'dark' ? (
-        <Sun className="h-[1.2rem] w-[1.2rem]" />
-      ) : (
-        <Moon className="h-[1.2rem] w-[1.2rem]" />
+    <button
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={clsx(
+        "transition-colors duration-300 ease-in-out",
+        "h-9 w-9 rounded-xl",
+        "flex items-center justify-center",
+        isDark
+          ? "bg-muted hover:bg-muted/80 text-white shadow-inner"
+          : "bg-secondary hover:bg-secondary/80 text-foreground shadow-sm"
       )}
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+      aria-label="Toggle theme"
+    >
+      {isDark ? (
+        <Sun className="h-4 w-4" />
+      ) : (
+        <Moon className="h-4 w-4" />
+      )}
+    </button>
   );
 }
