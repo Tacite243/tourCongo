@@ -23,7 +23,7 @@ export function ThemeSynchronizer() {
         const themeToSync = nextThemeValue as Theme | undefined; // 'light', 'dark', 'system'
 
         if (themeToSync && themeToSync !== reduxTheme) {
-            console.log(`Syncing Redux: next-themes is ${themeToSync}, Redux was ${reduxTheme}`);
+            // console.log(`Syncing Redux: next-themes is ${themeToSync}, Redux was ${reduxTheme}`);
             dispatch(setReduxTheme(themeToSync));
         }
         // Si vous voulez que Redux reflète toujours le thème résolu (light/dark)

@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import { ReduxProvider } from "@/components/ReduxProvider";
 import { ThemeProvider, ThemeSynchronizer } from "@/components/ThemeProvider";
 import { SiteHeader } from "@/components/Header";
+import { AuthInitializer } from "@/components/AuthInitializer";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -42,8 +43,10 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ThemeSynchronizer />
-            <SiteHeader/>
-            {children}
+            <AuthInitializer>
+              <SiteHeader />
+              {children}
+            </AuthInitializer>
           </ThemeProvider>
         </ReduxProvider>
       </body>
