@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
 import { ReduxProvider } from "@/components/ReduxProvider";
 import { ThemeProvider, ThemeSynchronizer } from "@/components/ThemeProvider";
 import { SiteHeader } from "@/components/Header";
 import { AuthInitializer } from "@/components/AuthInitializer";
 
 
-const inter = Inter({ subsets: ["latin"] });
+// const inter = Inter({ subsets: ["latin"] });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

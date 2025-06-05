@@ -11,37 +11,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Menu as MenuIcon, UserCircle, LogOut, Home, Sparkles, BellRing } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ThemeToggleButton } from "./ThemeToggleButton";
-
-// Imports pour Redux et l'authentification
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/redux/store';
+import { AppDispatch } from '@/redux/store';
 import {
   selectCurrentUser,
   selectIsAuthenticated,
-  logoutUser, // Assurez-vous que logoutUser est exporté depuis authSlice
+  logoutUser,
 } from '@/redux/slices/authSlice';
-
-// Imports pour le Dialog (popup)
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
-  DialogClose, // Optionnel pour un bouton de fermeture explicite
-} from "@/components/ui/dialog"; // Assurez-vous que ce chemin est correct
-
-// Importer vos formulaires
-import { LoginForm } from "./LoginForm"; // Créez ou ajustez ce chemin
-import { RegisterForm } from "./RegisterForm"; // Créez ou ajustez ce chemin
+} from "@/components/ui/dialog";
+import { LoginForm } from "./LoginForm";
+import { RegisterForm } from "./RegisterForm";
 import React, { useState, useEffect } from "react";
 
-// Définition du type pour les éléments de navigation (inchangé)
+// Définition du type pour les éléments de navigation
 interface NavItem {
   href: string;
   label: string;

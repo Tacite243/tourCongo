@@ -10,6 +10,7 @@ export async function POST(request: Request) {
     const validatedData = loginSchema.parse(body);
 
     const { user, token } = await authService.login(validatedData);
+    const threeMonthsInSeconds = 3 * 30 * 24 * 60 * 60; // approximativement 3 mois
 
     // Configuration du cookie - Correction ici
     (await cookies()).set('auth_token', token, {
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 1, // 1 jour
+      maxAge: threeMonthsInSeconds,
     });
 
     return NextResponse.json({ message: 'Connexion réussie', user });

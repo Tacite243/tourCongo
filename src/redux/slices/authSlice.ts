@@ -1,19 +1,18 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { UserAuthInfo } from '@/lib/types'; // Ajustez le chemin si nécessaire
+import { UserAuthInfo } from '@/lib/types';
 import { z } from 'zod';
-import { loginSchema, registerSchema } from '@/lib/utils/validation.schemas'; // Ajustez
+import { loginSchema, registerSchema } from '@/lib/utils/validation.schemas';
+import axios from 'axios';
 
-// Définir les types pour les données que les thunks attendront
 type LoginCredentials = z.infer<typeof loginSchema>;
-type RegisterCredentials = z.infer<typeof registerSchema>; // Nouveau type
+type RegisterCredentials = z.infer<typeof registerSchema>;
 
 interface AuthState {
   user: UserAuthInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null | undefined;
-  // Optionnel: pour indiquer un succès d'inscription si vous voulez afficher un message spécifique
   registrationSuccess: boolean;
 }
 
@@ -22,10 +21,10 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
-  registrationSuccess: false, // Initialiser à false
+  registrationSuccess: false,
 };
 
-// --- Thunk pour la connexion (loginUser) - Inchangé ---
+// --- Login ---
 export const loginUser = createAsyncThunk<
   UserAuthInfo,
   LoginCredentials,
@@ -34,57 +33,34 @@ export const loginUser = createAsyncThunk<
   'auth/loginUser',
   async (credentials, thunkAPI) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      });
-      const data = await response.json();
-      if (!response.ok) return thunkAPI.rejectWithValue(data.message || 'Échec de la connexion');
-      return data.user as UserAuthInfo;
+      const response = await axios.post('/api/auth/login', credentials);
+      return response.data.user as UserAuthInfo;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.message || 'Une erreur réseau est survenue');
+      const message = error.response?.data?.message || error.message || 'Échec de la connexion';
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
 
-// --- Thunk pour l'inscription (registerUser) - NOUVEAU ---
+// --- Register ---
 export const registerUser = createAsyncThunk<
-  UserAuthInfo, // Ce que le backend retourne pour /api/auth/register (l'utilisateur sans le mot de passe)
+  UserAuthInfo,
   RegisterCredentials,
   { rejectValue: string }
 >(
   'auth/registerUser',
   async (credentials, thunkAPI) => {
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // data.message devrait contenir l'erreur du backend (ex: email déjà utilisé, validation)
-        return thunkAPI.rejectWithValue(data.message || 'Échec de l\'inscription');
-      }
-      // data.user contient l'utilisateur nouvellement créé
-      // Note: Après l'inscription, l'utilisateur n'est généralement PAS automatiquement connecté
-      // (pas de cookie de session créé par l'API register).
-      // Il devra se connecter séparément. Si vous voulez le connecter automatiquement,
-      // votre API /register devrait aussi créer une session et un token.
-      return data.user as UserAuthInfo;
+      const response = await axios.post('/api/auth/register', credentials);
+      return response.data.user as UserAuthInfo;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.message || 'Une erreur réseau est survenue lors de l\'inscription');
+      const message = error.response?.data?.message || error.message || 'Échec de l\'inscription';
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
 
-
-// --- Thunk pour récupérer l'utilisateur actuel (fetchCurrentUser) - Inchangé ---
+// --- Fetch current user ---
 export const fetchCurrentUser = createAsyncThunk<
   UserAuthInfo,
   void,
@@ -93,36 +69,28 @@ export const fetchCurrentUser = createAsyncThunk<
   'auth/fetchCurrentUser',
   async (_, thunkAPI) => {
     try {
-      const response = await fetch('/api/auth/me', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await response.json();
-      if (!response.ok) return thunkAPI.rejectWithValue(data.message || 'Non autorisé');
-      return data.user as UserAuthInfo;
+      const response = await axios.get('/api/auth/me');
+      return response.data.user as UserAuthInfo;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.message || 'Erreur réseau');
+      const message = error.response?.data?.message || error.message || 'Non autorisé';
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
 
-// --- Thunk pour la déconnexion (logoutUser) - Inchangé ---
+// --- Logout ---
 export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
   'auth/logoutUser',
   async (_, thunkAPI) => {
     try {
-      const response = await fetch('/api/auth/logout', { method: 'POST' });
-      if (!response.ok) {
-        const data = await response.json();
-        return thunkAPI.rejectWithValue(data.message || 'Échec de la déconnexion');
-      }
+      await axios.post('/api/auth/logout');
       return;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.message || 'Erreur réseau');
+      const message = error.response?.data?.message || error.message || 'Échec de la déconnexion';
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
-
 
 const authSlice = createSlice({
   name: 'auth',
@@ -132,18 +100,17 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = !!action.payload;
       state.error = null;
-      state.registrationSuccess = false; // Réinitialiser si on définit l'utilisateur manuellement
+      state.registrationSuccess = false;
     },
     clearAuthError: (state) => {
       state.error = null;
     },
-    resetRegistrationSuccess: (state) => { // NOUVELLE ACTION pour réinitialiser le flag
-        state.registrationSuccess = false;
-    }
+    resetRegistrationSuccess: (state) => {
+      state.registrationSuccess = false;
+    },
   },
   extraReducers: (builder) => {
     builder
-      // Login (inchangé)
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -161,7 +128,6 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Register - NOUVEAU
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -169,22 +135,15 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action: PayloadAction<UserAuthInfo>) => {
         state.isLoading = false;
-        // L'utilisateur est enregistré mais PAS connecté automatiquement par ce thunk.
-        // state.user = action.payload; // Ne pas définir l'utilisateur ici
-        // state.isAuthenticated = true; // Ne pas mettre à true
-        state.registrationSuccess = true; // Indiquer que l'inscription a réussi
+        state.registrationSuccess = true;
         state.error = null;
-        // L'utilisateur devra se connecter avec ses nouveaux identifiants.
-        // Le payload (action.payload) contient les infos de l'utilisateur créé,
-        // vous pourriez les utiliser pour pré-remplir un formulaire de connexion ou afficher un message.
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload; // Afficher l'erreur d'inscription
+        state.error = action.payload;
         state.registrationSuccess = false;
       })
 
-      // Fetch Current User (inchangé)
       .addCase(fetchCurrentUser.pending, (state) => {
         state.isLoading = true;
       })
@@ -194,13 +153,12 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.error = null;
       })
-      .addCase(fetchCurrentUser.rejected, (state, action) => {
+      .addCase(fetchCurrentUser.rejected, (state) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
       })
 
-      // Logout (inchangé)
       .addCase(logoutUser.pending, (state) => {
         state.isLoading = true;
       })
@@ -218,14 +176,12 @@ const authSlice = createSlice({
   },
 });
 
-// Exporter la nouvelle action synchrone
 export const { setCurrentUser, clearAuthError, resetRegistrationSuccess } = authSlice.actions;
 
-// Sélecteurs
 export const selectCurrentUser = (state: RootState) => state.auth.user;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.auth.isLoading;
 export const selectAuthError = (state: RootState) => state.auth.error;
-export const selectRegistrationSuccess = (state: RootState) => state.auth.registrationSuccess; // NOUVEAU
+export const selectRegistrationSuccess = (state: RootState) => state.auth.registrationSuccess;
 
 export default authSlice.reducer;
