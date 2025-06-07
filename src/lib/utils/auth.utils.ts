@@ -1,17 +1,17 @@
+// src/lib/utils/auth.utils.ts
 import bcrypt from 'bcryptjs';
-import jwt, { SignOptions } from 'jsonwebtoken';
-import ms, { StringValue } from 'ms'; // Assurez-vous d'importer StringValue
-import { JwtPayload } from '@/lib/types';
-import { Role } from '@prisma/client';
+import * as jose from 'jose';
+import ms, { StringValue } from 'ms';
+// Les types devraient maintenant être correctement importés et définis
+import { JwtPayload, TokenSignPayload } from '@/lib/types';
 
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
-// Gardez JWT_EXPIRES_IN_STRING comme une chaîne pour la configuration via .env
 const JWT_EXPIRES_IN_STRING = process.env.JWT_EXPIRES_IN || '1d';
 
 if (!JWT_SECRET_ENV) {
   throw new Error('JWT_SECRET is not defined in environment variables. Please check your .env file.');
 }
-const JWT_SECRET: string = JWT_SECRET_ENV;
+const JWT_SECRET_UINT8ARRAY = new TextEncoder().encode(JWT_SECRET_ENV);
 
 export const hashPassword = async (password: string): Promise<string> => {
   const salt = await bcrypt.genSalt(10);
@@ -22,64 +22,57 @@ export const comparePassword = async (password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash);
 };
 
-interface TokenSignPayload {
-  id: string;
-  email: string;
-  role: Role;
-}
-
-export const generateToken = (payload: TokenSignPayload): string => {
-  // On dit à TypeScript de traiter JWT_EXPIRES_IN_STRING comme une StringValue.
-  // ms() retournera des millisecondes si la chaîne est valide, sinon undefined.
-  let expiresInMilliseconds: number | undefined = ms(JWT_EXPIRES_IN_STRING as StringValue);
-
-  // Vérifier si la conversion a réussi
-  if (typeof expiresInMilliseconds === 'undefined') {
-    console.warn(
-      `Invalid JWT_EXPIRES_IN format: "${JWT_EXPIRES_IN_STRING}". ` +
-      `Defaulting to 1 day.`
-    );
-    // Utiliser une valeur par défaut sûre si la conversion de la variable d'environnement échoue
-    expiresInMilliseconds = ms('1d' as StringValue); // '1d' est une StringValue valide
-
-    // Sécurité supplémentaire : vérifier si même la valeur par défaut a échoué (ne devrait jamais arriver)
-    if (typeof expiresInMilliseconds === 'undefined') {
-      console.error("Critial error: Failed to parse default JWT expiration '1d'.");
-      // À ce stade, vous pourriez lancer une erreur plus grave ou utiliser une valeur numérique fixe.
-      // Pour la simplicité, nous allons lancer une erreur pour arrêter le processus.
-      throw new Error("Failed to parse default JWT expiration '1d'. This should not happen.");
-    }
+export const generateToken = async (payloadToSign: TokenSignPayload): Promise<string> => {
+  const expiresInMs = ms(JWT_EXPIRES_IN_STRING as StringValue);
+  if (typeof expiresInMs === 'undefined') {
+    console.warn(`Invalid JWT_EXPIRES_IN format: "${JWT_EXPIRES_IN_STRING}". Defaulting to 1 day.`);
+    // Vous pourriez choisir de lever une erreur ou d'utiliser une valeur par défaut plus explicitement
+    throw new Error("Invalid JWT_EXPIRES_IN format.");
   }
 
-  // jwt.sign attend des secondes si 'expiresIn' est un nombre.
-  const expiresInSeconds = Math.floor(expiresInMilliseconds / 1000);
-
-  const options: SignOptions = {
-    expiresIn: expiresInSeconds, // Maintenant, c'est un nombre (en secondes)
-  };
-
   try {
-    return jwt.sign(payload, JWT_SECRET, options);
+    // Le payload que vous passez à SignJWT est celui qui sera encodé.
+    // Il n'est pas nécessaire de le caster en jose.JWTPayload ici si TokenSignPayload
+    // contient les claims que vous voulez. jose s'attend à un objet simple.
+    return await new jose.SignJWT({ ...payloadToSign }) // Passer directement votre payload
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      // setExpirationTime attend une chaîne de temps (comme "2h") ou un nombre de secondes (depuis l'époque)
+      .setExpirationTime(JWT_EXPIRES_IN_STRING) // Ou calculez les secondes si vous préférez
+      .sign(JWT_SECRET_UINT8ARRAY);
   } catch (error) {
-    console.error("Error signing JWT:", error);
+    console.error("Error signing JWT with jose:", error);
     throw new Error("Failed to sign JWT token.");
   }
 };
 
-export const verifyToken = (token: string): JwtPayload | null => {
+export const verifyToken = async (token: string): Promise<JwtPayload | null> => {
+  if (!token) return null;
   try {
-    if (!JWT_SECRET) {
-      console.error('JWT_SECRET is not available for token verification.');
-      return null;
+    if (!JWT_SECRET_UINT8ARRAY) {
+        console.error('JWT_SECRET is not available for token verification.');
+        return null;
     }
-    return jwt.verify(token, JWT_SECRET) as JwtPayload;
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      console.warn('Token expired:', error.message);
-    } else if (error instanceof jwt.JsonWebTokenError) {
-      console.error('Invalid token:', error.message);
+    // jwtVerify retourne un objet avec une propriété 'payload' de type JWTPayload (de jose)
+    const { payload: verifiedPayload } = await jose.jwtVerify(token, JWT_SECRET_UINT8ARRAY, {
+      algorithms: ['HS256'],
+    });
+
+    // Puisque notre JwtPayload étend JoseJWTPayload ET TokenSignPayload,
+    // nous pouvons maintenant caster verifiedPayload (qui est JoseJWTPayload) en JwtPayload.
+    // TypeScript comprendra que les champs de TokenSignPayload (id, email, role)
+    // sont attendus en plus des champs standards.
+    // C'est à vous de vous assurer que generateToken les a bien inclus.
+    return verifiedPayload as JwtPayload;
+
+  } catch (error: any) {
+    if (error.code === 'ERR_JWT_EXPIRED') {
+        console.warn('Token expired (jose):', error.message);
+    } else if (error.code === 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED' || error.code === 'ERR_JWS_INVALID') {
+        console.error('Invalid token signature or format (jose):', error.message);
     } else {
-      console.error('Token verification error:', error);
+        // Pour d'autres erreurs de jose.jwtVerify, comme JWTClaimValidationFailed si vous utilisez des claims spécifiques
+        console.error('Token verification error (jose):', error.name, error.message, error.code);
     }
     return null;
   }

@@ -47,7 +47,7 @@ export const authService = {
     }
 
     const { password, ...safeUser } = user;
-    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    const token = await generateToken({ id: user.id, email: user.email, role: user.role });
 
     return { user: safeUser, token };
   },

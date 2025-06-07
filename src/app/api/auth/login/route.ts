@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const { user, token } = await authService.login(validatedData);
     const threeMonthsInSeconds = 3 * 30 * 24 * 60 * 60; // approximativement 3 mois
 
-    // Configuration du cookie - Correction ici
+    // Configuration du cookie
     (await cookies()).set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       maxAge: threeMonthsInSeconds,
     });
 
-    return NextResponse.json({ message: 'Connexion réussie', user });
+    return NextResponse.json({ message: 'Connexion réussie', user: user });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: 'Validation échouée', errors: error.errors }, { status: 400 });

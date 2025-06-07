@@ -12,6 +12,7 @@ interface AuthState {
   user: UserAuthInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthInitialized: boolean;
   error: string | null | undefined;
   registrationSuccess: boolean;
 }
@@ -20,6 +21,7 @@ const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  isAuthInitialized: false,
   error: null,
   registrationSuccess: false,
 };
@@ -148,15 +150,17 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<UserAuthInfo>) => {
-        state.isLoading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.isAuthInitialized = true;
+        state.isLoading = false;
         state.error = null;
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
+        state.isAuthInitialized = true;
       })
 
       .addCase(logoutUser.pending, (state) => {

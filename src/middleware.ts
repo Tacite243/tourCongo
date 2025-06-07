@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/utils/auth.utils';
 import { AuthenticatedRequest, JwtPayload } from '@/lib/types';
 import { Role } from '@prisma/client';
 
+
 const protectedRoutes = ['/api/auth/me', '/api/admin']; // Routes nécessitant une authentification
 const adminRoutes = ['/api/admin']; // Routes nécessitant le rôle ADMIN ou SUPER_ADMIN
 const superAdminRoutes = ['/api/superadmin']; // Routes nécessitant le rôle SUPER_ADMIN
@@ -20,7 +21,9 @@ export async function middleware(request: NextRequest) {
   let userPayload: JwtPayload | null = null;
 
   if (token) {
-    userPayload = verifyToken(token);
+    console.log('[Middleware] Token found in cookie:', token);
+    userPayload = await verifyToken(token);
+    console.log('[Middleware] Payload from verifyToken:', userPayload);
   }
 
   // Logique de protection des routes
@@ -33,12 +36,12 @@ export async function middleware(request: NextRequest) {
     // Attacher les informations utilisateur à la requête pour les API routes
     // Note: Il faut caster `request` en `AuthenticatedRequest` pour que TypeScript soit content
     // Ceci est une façon de "passer" des données du middleware à la route handler.
-    const authenticatedRequest = request as AuthenticatedRequest;
-    authenticatedRequest.user = {
-      id: userPayload.id,
-      email: userPayload.email,
-      role: userPayload.role,
-    };
+    // const authenticatedRequest = request as AuthenticatedRequest;
+    // authenticatedRequest.user = {
+    //   id: userPayload.id,
+    //   email: userPayload.email,
+    //   role: userPayload.role,
+    // };
     
     // Vérification des rôles pour les routes spécifiques
     if (isSuperAdminRoute && userPayload.role !== Role.SUPER_ADMIN) {
@@ -50,13 +53,17 @@ export async function middleware(request: NextRequest) {
       console.log(`[Middleware] Forbidden: User ${userPayload.email} (role ${userPayload.role}) tried to access admin route ${pathname}`);
       return NextResponse.json({ message: 'Accès interdit : Privilèges insuffisants (Admin requis)' }, { status: 403 });
     }
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-user-id', userPayload.id);
+    requestHeaders.set('x-user-email', userPayload.email);
+    requestHeaders.set('x-user-role', userPayload.role);
     
     // Si tout est OK pour une route protégée/admin/superadmin, on continue avec la requête enrichie
     return NextResponse.next({
       request: {
-        headers: new Headers(request.headers), // Copie les headers originaux
-        // On pourrait aussi passer 'user' via un header personnalisé si on préfère
-        // 'x-user-payload': JSON.stringify(userPayload)
+        // headers: new Headers(request.headers),
+        headers: requestHeaders,
       },
     });
   }
