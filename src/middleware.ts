@@ -1,13 +1,14 @@
+// src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/utils/auth.utils';
-import { AuthenticatedRequest, JwtPayload } from '@/lib/types';
+// AuthenticatedRequest n'est plus nécessaire si on passe par les headers de manière simple
+import { JwtPayload } from '@/lib/types';
 import { Role } from '@prisma/client';
 
-
-const protectedRoutes = ['/api/auth/me', '/api/admin']; // Routes nécessitant une authentification
-const adminRoutes = ['/api/admin']; // Routes nécessitant le rôle ADMIN ou SUPER_ADMIN
-const superAdminRoutes = ['/api/superadmin']; // Routes nécessitant le rôle SUPER_ADMIN
+const protectedRoutes = ['/api/auth/me', '/api/admin', '/api/listings']; // Exemple: protéger la création de listings
+const adminRoutes = ['/api/admin'];
+const superAdminRoutes = ['/api/superadmin'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -21,68 +22,49 @@ export async function middleware(request: NextRequest) {
   let userPayload: JwtPayload | null = null;
 
   if (token) {
-    console.log('[Middleware] Token found in cookie:', token);
-    userPayload = await verifyToken(token);
-    console.log('[Middleware] Payload from verifyToken:', userPayload);
+    // console.log('[Middleware] Token found in cookie:', token);
+    userPayload = await verifyToken(token); // Utilise jose, donc async
+    // console.log('[Middleware] Payload from verifyToken:', userPayload);
   }
 
-  // Logique de protection des routes
   if (isProtectedRoute || isAdminRoute || isSuperAdminRoute) {
-    if (!userPayload) {
-      console.log(`[Middleware] No token or invalid token for protected route: ${pathname}`);
-      return NextResponse.json({ message: 'Non autorisé : Token manquant ou invalide' }, { status: 401 });
+    if (!userPayload?.id) { // Vérifier la présence de l'ID dans le payload
+      console.warn(`[Middleware] No valid user payload for protected route: ${pathname}. Token was: ${token ? 'present' : 'absent'}`);
+      return NextResponse.json({ message: 'Non autorisé : Session invalide ou expirée' }, { status: 401 });
     }
 
-    // Attacher les informations utilisateur à la requête pour les API routes
-    // Note: Il faut caster `request` en `AuthenticatedRequest` pour que TypeScript soit content
-    // Ceci est une façon de "passer" des données du middleware à la route handler.
-    // const authenticatedRequest = request as AuthenticatedRequest;
-    // authenticatedRequest.user = {
-    //   id: userPayload.id,
-    //   email: userPayload.email,
-    //   role: userPayload.role,
-    // };
-    
-    // Vérification des rôles pour les routes spécifiques
+    // Vérification des rôles
     if (isSuperAdminRoute && userPayload.role !== Role.SUPER_ADMIN) {
-      console.log(`[Middleware] Forbidden: User ${userPayload.email} (role ${userPayload.role}) tried to access super admin route ${pathname}`);
-      return NextResponse.json({ message: 'Accès interdit : Privilèges insuffisants (Super Admin requis)' }, { status: 403 });
+      // ... (log et réponse 403)
+      return NextResponse.json({ message: 'Accès interdit : Privilèges Super Admin requis' }, { status: 403 });
     }
-    
     if (isAdminRoute && userPayload.role !== Role.ADMIN && userPayload.role !== Role.SUPER_ADMIN) {
-      console.log(`[Middleware] Forbidden: User ${userPayload.email} (role ${userPayload.role}) tried to access admin route ${pathname}`);
-      return NextResponse.json({ message: 'Accès interdit : Privilèges insuffisants (Admin requis)' }, { status: 403 });
+      // ... (log et réponse 403)
+      return NextResponse.json({ message: 'Accès interdit : Privilèges Admin requis' }, { status: 403 });
     }
 
+    // Préparer les nouveaux headers
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-user-id', userPayload.id);
-    requestHeaders.set('x-user-email', userPayload.email);
-    requestHeaders.set('x-user-role', userPayload.role);
-    
-    // Si tout est OK pour une route protégée/admin/superadmin, on continue avec la requête enrichie
+    // Optionnel: vous pouvez toujours passer le rôle si certaines routes en ont besoin directement
+    // sans refaire une requête DB, mais pour /me, l'ID suffit.
+    // requestHeaders.set('x-user-role', userPayload.role);
+
     return NextResponse.next({
       request: {
-        // headers: new Headers(request.headers),
         headers: requestHeaders,
       },
     });
   }
-  
-  // Pour les routes publiques, on laisse passer
+
   return NextResponse.next();
 }
 
-// Configurer le matcher pour spécifier sur quelles routes le middleware s'applique
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Mais on veut qu'il s'exécute sur nos routes API.
-     */
-    '/api/:path*', // Applique à toutes les routes API
-    // Ajoutez d'autres chemins si vous avez des pages front-end à protéger de la même manière
+    '/api/auth/me/:path*',
+    '/api/admin/:path*',
+    '/api/superadmin/:path*',
+    '/api/listings/:path*',
   ],
 };

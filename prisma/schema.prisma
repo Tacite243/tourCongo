@@ -1,26 +1,157 @@
-
-
+// Génère le client Prisma JS pour interagir avec la base de données
 generator client {
   provider = "prisma-client-js"
 }
 
+// Déclare la source de données PostgreSQL
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL") // Stockée dans le fichier .env
 }
 
+// 🎭 Enumération des rôles utilisateur
 enum Role {
-  USER
-  ADMIN
-  SUPER_ADMIN
+  USER         // Utilisateur classique
+  ADMIN        // Administrateur de la plateforme
+  SUPER_ADMIN  // Accès total (niveau système)
 }
 
+// 👤 Utilisateur de la plateforme (peut être hôte ou voyageur)
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String      @id @default(cuid())           // Identifiant unique généré automatiquement
+  email        String      @unique                        // Email unique (login principal)
+  password     String                                     // Mot de passe (haché côté backend)
+  name         String?                                    // Nom complet (optionnel)
+  avatarUrl    String?                                    // URL de l’image de profil
+  phone        String?                                    // Numéro de téléphone (optionnel)
+  bio          String?                                    // Brève présentation (facultative)
+  role         Role        @default(USER)                 // Rôle attribué par défaut
+  createdAt    DateTime    @default(now())                // Date de création du compte
+  updatedAt    DateTime    @updatedAt                     // Mise à jour automatique
+
+  // 🔗 Relations
+  listings         Listing[]                              // Logements créés par l'utilisateur
+  bookings         Booking[]                              // Réservations effectuées
+  reviews          Review[]                               // Avis postés sur d'autres logements
+  messagesSent     Message[] @relation("MessagesSent")    // Messages envoyés à d'autres utilisateurs
+  messagesReceived Message[] @relation("MessagesReceived")// Messages reçus
+  favorites        Favorite[]                             // Logements ajoutés en favori
+  notifications    Notification[]                         // Notifications reçues
+  verification     Verification?                          // Données de vérification d'identité (pièces, etc.)
+}
+
+// 🏠 Logement proposé à la location
+model Listing {
+  id           String       @id @default(cuid())          // Identifiant unique
+  title        String                                     // Titre de l'annonce
+  description  String                                     // Description détaillée du logement
+  type         String                                     // Type de logement (maison, appart, studio…)
+  price        Float                                      // Prix par nuit
+  address      String                                     // Adresse complète
+  city         String                                     // Ville
+  country      String                                     // Pays
+  latitude     Float                                      // Coordonnée GPS - Latitude
+  longitude    Float                                      // Coordonnée GPS - Longitude
+  amenities    String[]                                   // Liste des équipements (wifi, TV, etc.)
+  rules        String?                                    // Règles de la maison (optionnel)
+  maxGuests    Int                                        // Nombre maximum de voyageurs
+  bedrooms     Int                                        // Nombre de chambres
+  bathrooms    Int                                        // Nombre de salles de bain
+
+  // 🔗 Lien avec l'hôte
+  host         User        @relation(fields: [hostId], references: [id]) // Propriétaire de l'annonce
+  hostId       String
+
+  // 🔗 Autres relations
+  photos       Photo[]                                   // Galerie photo du logement
+  availability Availability[]                            // Périodes de disponibilité
+  bookings     Booking[]                                 // Réservations effectuées sur ce logement
+  reviews      Review[]                                  // Avis laissés par les voyageurs
+  favorites    Favorite[]                                // Utilisateurs ayant mis ce logement en favori
+
+  createdAt    DateTime     @default(now())              // Date de création
+  updatedAt    DateTime     @updatedAt                   // Mise à jour automatique
+}
+
+// 🖼️ Photo associée à un logement
+model Photo {
+  id         String   @id @default(cuid())               // Identifiant unique de la photo
+  url        String                                    // URL de l'image hébergée
+  listing    Listing  @relation(fields: [listingId], references: [id]) // Logement concerné
+  listingId  String
+}
+
+// 📅 Période pendant laquelle un logement est disponible à la réservation
+model Availability {
+  id         String   @id @default(cuid())               // ID unique
+  listing    Listing  @relation(fields: [listingId], references: [id]) // Logement concerné
+  listingId  String
+  startDate  DateTime                                  // Début de la période disponible
+  endDate    DateTime                                  // Fin de la période disponible
+}
+
+// 🧳 Réservation effectuée par un utilisateur
+model Booking {
+  id          String   @id @default(cuid())              // ID unique
+  listing     Listing  @relation(fields: [listingId], references: [id]) // Logement réservé
+  listingId   String
+  user        User     @relation(fields: [userId], references: [id])   // Utilisateur ayant réservé
+  userId      String
+  startDate   DateTime                                 // Début du séjour
+  endDate     DateTime                                 // Fin du séjour
+  totalPrice  Float                                    // Prix total de la réservation
+  createdAt   DateTime  @default(now())                // Date de création de la réservation
+}
+
+// ⭐ Avis posté par un utilisateur après un séjour
+model Review {
+  id          String   @id @default(cuid())              // ID de l'avis
+  rating      Int                                      // Note (de 1 à 5)
+  comment     String?                                  // Commentaire (optionnel)
+  listing     Listing  @relation(fields: [listingId], references: [id]) // Logement évalué
+  listingId   String
+  user        User     @relation(fields: [userId], references: [id])   // Auteur de l'avis
+  userId      String
+  createdAt   DateTime @default(now())                 // Date de publication
+}
+
+// 💬 Message privé entre deux utilisateurs
+model Message {
+  id          String   @id @default(cuid())              // ID du message
+  sender      User     @relation("MessagesSent", fields: [senderId], references: [id]) // Expéditeur
+  senderId    String
+  receiver    User     @relation("MessagesReceived", fields: [receiverId], references: [id]) // Destinataire
+  receiverId  String
+  content     String                                   // Texte du message
+  sentAt      DateTime  @default(now())                // Date d'envoi
+}
+
+// ❤️ Système de favoris (logement ajouté par un utilisateur)
+model Favorite {
+  id         String   @id @default(cuid())               // ID unique
+  user       User     @relation(fields: [userId], references: [id])   // L'utilisateur
+  userId     String
+  listing    Listing  @relation(fields: [listingId], references: [id])// Le logement
+  listingId  String
+  createdAt  DateTime @default(now())                   // Date d’ajout en favori
+}
+
+// 🔔 Notification utilisateur (nouveau message, rappel, etc.)
+model Notification {
+  id         String   @id @default(cuid())               // ID de la notification
+  user       User     @relation(fields: [userId], references: [id]) // Utilisateur ciblé
+  userId     String
+  message    String                                   // Contenu de la notification
+  read       Boolean  @default(false)                 // Marquée comme lue ou non
+  createdAt  DateTime @default(now())                 // Date d’envoi
+}
+
+// ✅ Vérification d’identité de l’utilisateur (documents)
+model Verification {
+  id         String   @id @default(cuid())               // ID unique
+  user       User     @relation(fields: [userId], references: [id]) // Utilisateur concerné
+  userId     String   @unique                         // Un seul enregistrement par utilisateur
+  isVerified Boolean  @default(false)                 // Statut de la vérification
+  docUrl     String?                                 // Lien vers le document d’identité
+  createdAt  DateTime @default(now())                // Date d’enregistrement
 }

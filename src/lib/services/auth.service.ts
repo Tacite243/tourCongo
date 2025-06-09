@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import { hashPassword, comparePassword, generateToken } from '@/lib/utils/auth.utils';
 import { Role, User } from '@prisma/client';
-import { SafeUser } from '@/lib/types';
+import { SafeUser, UserAuthInfo } from '@/lib/types';
 import { registerSchema, loginSchema } from '@/lib/utils/validation.schemas';
 import { z } from 'zod';
 
@@ -17,7 +17,7 @@ export const authService = {
     }
 
     const hashedPassword = await hashPassword(data.password);
-    
+
     // Par défaut, le premier utilisateur est SUPER_ADMIN, les suivants sont USER
     // Logique à adapter selon vos besoins (ex: panel d'admin pour créer d'autres admins)
     const userCount = await prisma.user.count();
@@ -36,7 +36,19 @@ export const authService = {
   },
 
   async login(data: LoginInput): Promise<{ user: SafeUser; token: string }> {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        avatarUrl: true, // NOUVEAU
+        phone: true,     // NOUVEAU
+        bio: true,       // NOUVEAU
+        password: true,
+      }
+    });
     if (!user) {
       throw new Error('Email ou mot de passe incorrect.');
     }
@@ -53,9 +65,21 @@ export const authService = {
   },
 
   async getUserById(id: string): Promise<SafeUser | null> {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        avatarUrl: true,
+        phone: true,
+        bio: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
     if (!user) return null;
-    const { password, ...safeUser } = user;
-    return safeUser;
+    return user as UserAuthInfo;
   },
 };

@@ -1,35 +1,37 @@
-// src/lib/types/index.d.ts
-import { Role } from '@prisma/client'; // Assurez-vous que ce chemin est correct
-import type { JWTPayload as JoseJWTPayload } from 'jose'; // Importer le type de base de jose
+import { Role, User as PrismaUser } from '@prisma/client';
+import type { JWTPayload as JoseJWTPayload } from 'jose';
 
-// Ce que vous mettez DANS le token lors de la génération
+
+
 export interface TokenSignPayload {
   id: string;
   email: string;
   role: Role;
-  // Vous pouvez ajouter d'autres claims personnalisés ici si nécessaire
 }
 
-// Ce que vous attendez APRÈS la vérification du token.
-// Il contiendra vos claims personnalisés ET les claims standards de JWT (comme exp, iat).
+
 export interface JwtPayload extends JoseJWTPayload, TokenSignPayload {
-  // TokenSignPayload contient déjà id, email, role.
-  // JoseJWTPayload ajoute les champs standards comme exp, iat, etc.
-  // Si vous avez d'autres champs obligatoires DANS LE PAYLOAD VERIFIE qui ne sont ni dans
-  // TokenSignPayload ni dans JoseJWTPayload, ajoutez-les ici.
-  // Par exemple, si vous mettiez un `name` directement dans le token:
-  // name?: string;
+  // Les champs de TokenSignPayload sont déjà là.
+  // JoseJWTPayload ajoute exp, iat, etc.
 }
 
-
-// UserAuthInfo et SafeUser (si pas déjà définis ailleurs)
+// Informations utilisateur renvoyées par les API ou stockées dans Redux
+// Cela doit correspondre aux champs que vous voulez exposer du modèle User de Prisma
 export interface UserAuthInfo {
   id: string;
   email: string;
-  name?: string | null;
+  name?: string | null;       // Champ du modèle User
+  avatarUrl?: string | null;  // Champ du modèle User
+  phone?: string | null;      // Champ du modèle User
+  bio?: string | null;        // Champ du modèle User
   role: Role;
+  // Ajoutez d'autres champs si nécessaire, mais gardez-le léger pour l'auth
 }
-export type SafeUser = Omit<UserAuthInfo, 'password'>;
+
+// Type SafeUser, dérivé de UserAuthInfo (ou directement de PrismaUser si vous préférez)
+// Si dérivé de PrismaUser, il faut Omit beaucoup plus de champs (relations, password)
+// Il est souvent plus simple de définir UserAuthInfo comme la "forme" publique de l'utilisateur.
+export type SafeUser = UserAuthInfo; // UserAuthInfo est déjà "safe" (sans mot de passe)
 
 // Pour étendre l'objet Request de Next.js dans le middleware
 import { NextRequest } from 'next/server';
@@ -38,5 +40,6 @@ export interface AuthenticatedRequest extends NextRequest {
     id: string;
     email: string;
     role: Role;
+    name?: string | null; // Peut aussi être inclus ici si vous l'ajoutez au payload du token
   };
 }

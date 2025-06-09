@@ -1,41 +1,30 @@
-// import { NextResponse } from 'next/server';
-// import { AuthenticatedRequest } from '@/lib/types'; // Type étendu pour la requête
-
-// export async function GET(request: AuthenticatedRequest) {
-//   // Le middleware aura déjà vérifié le token et attaché 'request.user'
-//   if (!request.user) {
-//     // Cela ne devrait pas arriver si le middleware fonctionne correctement
-//     return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
-//   }
-
-//   // request.user contient { id, email, role }
-//   return NextResponse.json({ user: request.user });
-// }
-
-
 import { NextResponse, NextRequest } from 'next/server';
-import { Role } from '@prisma/client'; // Si vous avez besoin de typer le rôle
+import { authService } from '@/lib/services/auth.service';
+import { UserAuthInfo } from '@/lib/types'; // Le type de retour attendu pour Redux
 
-export async function GET(request: NextRequest) { // Utiliser NextRequest standard
+export async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
-  const userEmail = request.headers.get('x-user-email');
-  const userRole = request.headers.get('x-user-role') as Role | null; // Caster si nécessaire
 
-  // Ou si vous avez sérialisé tout le payload:
-  // const userPayloadString = request.headers.get('x-user-payload');
-  // const user = userPayloadString ? JSON.parse(userPayloadString) : null;
-
-  if (!userId || !userEmail || !userRole) {
-    // Cela signifie que le middleware n'a pas correctement défini les headers,
-    // ou qu'on a atteint cette route sans passer par le middleware de la bonne manière.
-    return NextResponse.json({ message: 'Informations utilisateur manquantes dans les headers' }, { status: 401 });
+  if (!userId) {
+    console.warn("[API /me] x-user-id header manquant. Le middleware n'a pas fonctionné comme prévu.");
+    return NextResponse.json({ message: 'Non autorisé : Informations utilisateur manquantes' }, { status: 401 });
   }
 
-  return NextResponse.json({
-    user: {
-      id: userId,
-      email: userEmail,
-      role: userRole,
+  try {
+    const user = await authService.getUserById(userId); // Ce service doit retourner UserAuthInfo ou null
+
+    if (!user) {
+      // Cela peut arriver si l'utilisateur a été supprimé de la DB mais que le token est toujours techniquement valide
+      // ou si l'ID dans le token est corrompu.
+      console.warn(`[API /me] Utilisateur non trouvé en base de données pour l'ID: ${userId}`);
+      return NextResponse.json({ message: 'Non autorisé : Utilisateur introuvable' }, { status: 401 });
     }
-  });
+
+    // 'user' devrait être de type UserAuthInfo (ou SafeUser) comme défini dans vos types
+    return NextResponse.json({ user: user as UserAuthInfo });
+
+  } catch (error) {
+    console.error('[API /me] Erreur lors de la récupération de l\'utilisateur:', error);
+    return NextResponse.json({ message: 'Erreur interne du serveur lors de la récupération des informations utilisateur' }, { status: 500 });
+  }
 }
