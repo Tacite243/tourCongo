@@ -31,14 +31,18 @@ import {
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
 import React, { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { SearchBar } from "./SearchBar";
 
 // Définition du type pour les éléments de navigation
-interface NavItem {
+interface NavItemConfig {
   href: string;
   label: string;
   icon?: React.ElementType;
   isNew?: boolean;
 }
+
+const SCROLL_THRESHOLD_SWITCH_TO_SEARCH = 10;
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -52,7 +56,9 @@ export function SiteHeader() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
-  const navItems: NavItem[] = [
+  const [showSearchInHeader, setShowSearchInHeader] = useState(false);
+
+  const actualNavLinks: NavItemConfig[] = [
     { href: "/logements", label: "Logements", icon: Home, isNew: false },
     { href: "/experiences", label: "Expériences", icon: Sparkles, isNew: true },
     { href: "/services", label: "Services", icon: BellRing, isNew: true },
@@ -72,15 +78,57 @@ export function SiteHeader() {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      setIsLoginOpen(false);
+      setIsRegisterOpen(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const shouldShowSearch = window.scrollY > SCROLL_THRESHOLD_SWITCH_TO_SEARCH;
+      if (showSearchInHeader !== shouldShowSearch) {
+        setShowSearchInHeader(shouldShowSearch);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Check initial scroll position
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [showSearchInHeader]);
+
+  const handleCentralNavTriggerClick = () => {
+    if (!showSearchInHeader) {
+      setShowSearchInHeader(true);
+      if (window.scrollY <= SCROLL_THRESHOLD_SWITCH_TO_SEARCH) {
+        window.scrollTo({ top: SCROLL_THRESHOLD_SWITCH_TO_SEARCH + 1, behavior: 'smooth' });
+      }
+    } else {
+      // If search is already shown, clicking it might focus the main search bar on the page
+      const mainSearchBarInput = document.getElementById("main-search-bar-input");
+      if (mainSearchBarInput) {
+        mainSearchBarInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => mainSearchBarInput.focus(), 300);
+      }
+    }
+  };
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 max-w-screen-2xl items-center px-4 md:px-9">
+      <header
+        className={cn(
+          "sticky top-0 z-50 w-full bg-background transition-all duration-200 ease-out",
+          showSearchInHeader ? "shadow-md border-b border-border/40" : "border-b border-transparent"
+          // Vous pouvez ajouter une classe ici si le header est au-dessus d'un hero sombre
+          // par exemple, pour rendre le texte du logo et des actions blanches initialement.
+          // `showSearchInHeader ? "bg-background" : "bg-transparent text-white"`
+        )}
+      >
+        <div className="container flex h-20 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8">
           {/* Section Gauche: Logo */}
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <svg /* Votre SVG Logo */ width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
-              <path d="M29.8665 10.3511C29.9465 9.54311 29.4025 8.79811 28.6115 8.51411C27.8205 8.23111 26.9335 8.47711 26.4705 9.11311L24.0005 12.7331V4.93411C24.0005 4.24911 23.4135 3.69411 22.6875 3.69411C21.9615 3.69411 21.3755 4.24911 21.3755 4.93411V10.5481L17.6165 4.66711C17.1485 3.92811 16.2435 3.61411 15.4085 3.81711C14.5745 4.02011 13.9545 4.71311 13.9235 5.55311L13.6965 11.0871L10.6245 5.01011C10.1735 4.14511 9.25051 3.74211 8.34351 3.95711C7.43651 4.17311 6.80051 4.94411 6.75751 5.84411L6.30251 15.6441L3.53151 10.1611C3.07451 9.27211 2.15851 8.87011 1.25851 9.10211C0.357511 9.33311 -0.156489 10.1381 0.0335114 11.0371C0.223511 11.9371 0.969511 12.5841 1.84251 12.6351L1.90251 12.6381L5.12551 28.0001H5.15251C5.48851 28.0001 5.80051 27.7941 5.93451 27.4881L10.1165 17.8911L12.9385 27.4881C13.0725 27.7941 13.3855 28.0001 13.7205 28.0001H13.7475L17.1525 16.0351L19.8255 27.4881C19.9595 27.7941 20.2725 28.0001 20.6075 28.0001H20.6345L26.0985 10.6991C26.0995 10.6961 26.1005 10.6941 26.1025 10.6911L29.8665 10.3511Z" fill="#FF5A5F"/>
+              <path d="M29.8665 10.3511C29.9465 9.54311 29.4025 8.79811 28.6115 8.51411C27.8205 8.23111 26.9335 8.47711 26.4705 9.11311L24.0005 12.7331V4.93411C24.0005 4.24911 23.4135 3.69411 22.6875 3.69411C21.9615 3.69411 21.3755 4.24911 21.3755 4.93411V10.5481L17.6165 4.66711C17.1485 3.92811 16.2435 3.61411 15.4085 3.81711C14.5745 4.02011 13.9545 4.71311 13.9235 5.55311L13.6965 11.0871L10.6245 5.01011C10.1735 4.14511 9.25051 3.74211 8.34351 3.95711C7.43651 4.17311 6.80051 4.94411 6.75751 5.84411L6.30251 15.6441L3.53151 10.1611C3.07451 9.27211 2.15851 8.87011 1.25851 9.10211C0.357511 9.33311 -0.156489 10.1381 0.0335114 11.0371C0.223511 11.9371 0.969511 12.5841 1.84251 12.6351L1.90251 12.6381L5.12551 28.0001H5.15251C5.48851 28.0001 5.80051 27.7941 5.93451 27.4881L10.1165 17.8911L12.9385 27.4881C13.0725 27.7941 13.3855 28.0001 13.7205 28.0001H13.7475L17.1525 16.0351L19.8255 27.4881C19.9595 27.7941 20.2725 28.0001 20.6075 28.0001H20.6345L26.0985 10.6991C26.0995 10.6961 26.1005 10.6941 26.1025 10.6911L29.8665 10.3511Z" fill="#FF5A5F" />
             </svg>
             <span className="font-bold text-xl text-[#FF5A5F] hidden sm:inline-block">
               Tour Congo
@@ -88,21 +136,47 @@ export function SiteHeader() {
           </Link>
 
           {/* Section Centrale: Navigation (inchangée) */}
-          <nav className="flex flex-1 items-center justify-center gap-1 sm:gap-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`relative group flex flex-col items-center px-2 sm:px-3 py-2 text-sm font-medium transition-colors hover:text-foreground ${pathname === item.href ? "text-foreground" : "text-muted-foreground"}`}
-              >
-                <div className="flex items-center gap-1">
-                  {item.icon && <item.icon className={`h-5 w-5 hidden sm:inline-block ${pathname === item.href ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"}`} />}
-                  <span>{item.label}</span>
-                </div>
-                {pathname === item.href && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 bg-foreground rounded-full mt-1"></span>}
-              </Link>
-            ))}
-          </nav>
+          <div className="flex-1 flex justify-center items-center min-w-0 px-2 sm:px-0 relative h-12">
+            <div
+              className={cn(
+                // "flex items-center justify-center bg-background border border-border rounded-full shadow-md py-2 px-1 sm:px-2 cursor-pointer hover:shadow-lg transition-all duration-300 ease-in-out absolute inset-0",
+                showSearchInHeader
+                  ? "opacity-0 scale-90 pointer-events-none"
+                  : "opacity-100 scale-100"
+              )}
+              onClick={handleCentralNavTriggerClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleCentralNavTriggerClick()}
+            >
+              <nav className="flex flex-1 items-center justify-center gap-1 sm:gap-2">
+                {actualNavLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`relative group flex flex-col items-center px-2 sm:px-3 py-2 text-sm font-medium transition-colors hover:text-foreground ${pathname === item.href ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    <div className="flex items-center gap-1">
+                      {item.icon && <item.icon className={`h-5 w-5 hidden sm:inline-block ${pathname === item.href ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"}`} />}
+                      <span>{item.label}</span>
+                    </div>
+                    {pathname === item.href && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 bg-foreground rounded-full mt-1"></span>}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+            {/* Barre de recherche compacte dans le header */}
+            <div
+              className={cn(
+                "flex items-center justify-center w-auto transition-all duration-300 ease-in-out absolute inset-0",
+                showSearchInHeader
+                  ? "opacity-100 scale-100"
+                  : "opacity-0 scale-95 pointer-events-none"
+              )}
+            >
+              {showSearchInHeader && <SearchBar inHeaderCompactMode={true} />}
+            </div>
+          </div>
 
           {/* Section Droite: Actions utilisateur */}
           <div className="flex items-center justify-end space-x-2 sm:space-x-4">
@@ -176,16 +250,7 @@ export function SiteHeader() {
               Accédez à votre compte pour continuer.
             </DialogDescription>
           </DialogHeader>
-          <LoginForm /> {/* Votre composant LoginForm ici */}
-          {/*
-          <DialogFooter>
-             Vous pourriez ajouter un lien "Pas encore de compte ? S'inscrire" ici
-             qui fermerait ce dialog et ouvrirait le dialog d'inscription.
-            <Button type="button" variant="link" onClick={() => { setIsLoginOpen(false); setIsRegisterOpen(true); }}>
-              Pas encore de compte ? S'inscrire
-            </Button>
-          </DialogFooter>
-          */}
+          <LoginForm />
         </DialogContent>
       </Dialog>
 
@@ -199,15 +264,11 @@ export function SiteHeader() {
             </DialogDescription>
           </DialogHeader>
           <RegisterForm /> {/* Votre composant RegisterForm ici */}
-           {/*
-          <DialogFooter>
-            <Button type="button" variant="link" onClick={() => { setIsRegisterOpen(false); setIsLoginOpen(true); }}>
-              Déjà un compte ? Se connecter
-            </Button>
-          </DialogFooter>
-          */}
         </DialogContent>
       </Dialog>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-8" id="main-search-bar-anchor">
+        <SearchBar />
+      </div>
     </>
   );
 }

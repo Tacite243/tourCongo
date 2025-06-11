@@ -1,12 +1,10 @@
-// src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/utils/auth.utils';
-// AuthenticatedRequest n'est plus nécessaire si on passe par les headers de manière simple
 import { JwtPayload } from '@/lib/types';
 import { Role } from '@prisma/client';
 
-const protectedRoutes = ['/api/auth/me', '/api/admin', '/api/listings']; // Exemple: protéger la création de listings
+const protectedRoutes = ['/api/auth/me', '/api/admin', '/api/listings'];
 const adminRoutes = ['/api/admin'];
 const superAdminRoutes = ['/api/superadmin'];
 

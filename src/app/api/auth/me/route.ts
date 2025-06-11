@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Non autorisé : Utilisateur introuvable' }, { status: 401 });
     }
 
-    // 'user' devrait être de type UserAuthInfo (ou SafeUser) comme défini dans vos types
+    // 'user' devrait être de type UserAuthInfo (ou SafeUser) comme défini dans les types
     return NextResponse.json({ user: user as UserAuthInfo });
 
   } catch (error) {

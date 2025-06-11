@@ -5,6 +5,7 @@ import { SafeUser, UserAuthInfo } from '@/lib/types';
 import { registerSchema, loginSchema } from '@/lib/utils/validation.schemas';
 import { z } from 'zod';
 
+
 // Type pour les données d'inscription, inféré de Zod
 type RegisterInput = z.infer<typeof registerSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
