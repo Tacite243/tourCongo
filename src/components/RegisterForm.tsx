@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/redux/store';
+import { AppDispatch } from '@/redux/store';
 import {
   registerUser,
   selectAuthLoading,
@@ -14,18 +14,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-// import { useRouter } from 'next/navigation'; // Si vous voulez rediriger vers la page de connexion
 
 export function RegisterForm() {
   const dispatch = useDispatch<AppDispatch>();
-  // const router = useRouter();
   const isLoading = useSelector(selectAuthLoading);
   const authError = useSelector(selectAuthError);
   const registrationSuccess = useSelector(selectRegistrationSuccess);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState(''); // champ name optionnel
+  const [name, setName] = useState('');
 
   // Gérer l'affichage du message de succès et la redirection/réinitialisation
   useEffect(() => {
@@ -33,7 +31,6 @@ export function RegisterForm() {
       // Option 1: Afficher un message et rediriger vers la page de connexion
       alert('Inscription réussie ! Vous pouvez maintenant vous connecter.');
       dispatch(resetRegistrationSuccess()); // Réinitialiser le flag
-      // router.push('/login'); // Rediriger vers la page de connexion
 
       // Option 2: Juste afficher un message et l'utilisateur peut cliquer sur un lien vers la connexion
       // Le message pourrait être un composant plus élégant qu'une alerte.
@@ -45,19 +42,21 @@ export function RegisterForm() {
     if (authError) {
       dispatch(clearAuthError());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, password, name]);
 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!email || !password) { // Ajoutez une validation de base côté client si vous le souhaitez
+    if (!email || !password) {
       alert("L'email et le mot de passe sont requis.");
       return;
     }
     dispatch(registerUser({ email, password, name: name || undefined })) // name est optionnel
       .unwrap()
-      .then((createdUser) => {
+      .then((
+        // createdUser
+      ) => {
         console.log('Inscription réussie !');
         // Le useEffect ci-dessus gérera l'affichage du message de succès.
         // Pas besoin de définir l'utilisateur dans l'état ici, car il n'est pas connecté.
@@ -73,9 +72,6 @@ export function RegisterForm() {
       <div className="p-4 text-center">
         <h2 className="text-xl font-semibold text-green-600">Inscription Réussie !</h2>
         <p className="mt-2">Vous pouvez maintenant vous connecter avec vos identifiants.</p>
-        {/* Vous pouvez ajouter un lien vers la page de connexion ici */}
-        {/* Exemple: <Link href="/login"><Button className="mt-4">Se connecter</Button></Link> */}
-        {/* Pour l'instant, l'alerte dans useEffect gère la notification */}
       </div>
     );
   }
@@ -111,7 +107,7 @@ export function RegisterForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          minLength={8} // Correspond à votre validation Zod
+          minLength={8} // Correspond à la validation Zod
           disabled={isLoading}
         />
       </div>

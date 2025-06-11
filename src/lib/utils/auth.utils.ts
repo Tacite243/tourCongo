@@ -1,8 +1,7 @@
-// src/lib/utils/auth.utils.ts
+export const runtime = "nodejs";
 import bcrypt from 'bcryptjs';
 import * as jose from 'jose';
 import ms, { StringValue } from 'ms';
-// Les types devraient maintenant être correctement importés et définis
 import { JwtPayload, TokenSignPayload } from '@/lib/types';
 
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
@@ -50,8 +49,8 @@ export const verifyToken = async (token: string): Promise<JwtPayload | null> => 
   if (!token) return null;
   try {
     if (!JWT_SECRET_UINT8ARRAY) {
-        console.error('JWT_SECRET is not available for token verification.');
-        return null;
+      console.error('JWT_SECRET is not available for token verification.');
+      return null;
     }
     // jwtVerify retourne un objet avec une propriété 'payload' de type JWTPayload (de jose)
     const { payload: verifiedPayload } = await jose.jwtVerify(token, JWT_SECRET_UINT8ARRAY, {
@@ -65,14 +64,16 @@ export const verifyToken = async (token: string): Promise<JwtPayload | null> => 
     // C'est à vous de vous assurer que generateToken les a bien inclus.
     return verifiedPayload as JwtPayload;
 
-  } catch (error: any) {
-    if (error.code === 'ERR_JWT_EXPIRED') {
-        console.warn('Token expired (jose):', error.message);
-    } else if (error.code === 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED' || error.code === 'ERR_JWS_INVALID') {
-        console.error('Invalid token signature or format (jose):', error.message);
+  } catch (error) { // Plus besoin de : any ici, error est 'unknown' par défaut
+    // jose lève des erreurs avec une propriété 'code'
+    const joseError = error as { code?: string; name?: string; message?: string }; // Type assertion plus sûre
+
+    if (joseError.code === 'ERR_JWT_EXPIRED') {
+      console.warn('Token expired (jose):', joseError.message);
+    } else if (joseError.code === 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED' || joseError.code === 'ERR_JWS_INVALID') {
+      console.error('Invalid token signature or format (jose):', joseError.message);
     } else {
-        // Pour d'autres erreurs de jose.jwtVerify, comme JWTClaimValidationFailed si vous utilisez des claims spécifiques
-        console.error('Token verification error (jose):', error.name, error.message, error.code);
+      console.error('Token verification error (jose):', joseError.name, joseError.message, joseError.code);
     }
     return null;
   }

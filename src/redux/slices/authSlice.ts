@@ -3,7 +3,7 @@ import { RootState } from '../store';
 import { UserAuthInfo } from '@/lib/types';
 import { z } from 'zod';
 import { loginSchema, registerSchema } from '@/lib/utils/validation.schemas';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 type LoginCredentials = z.infer<typeof loginSchema>;
 type RegisterCredentials = z.infer<typeof registerSchema>;
@@ -37,9 +37,13 @@ export const loginUser = createAsyncThunk<
     try {
       const response = await axios.post('/api/auth/login', credentials);
       return response.data.user as UserAuthInfo;
-    } catch (error: any) {
-      const message = error.response?.data?.message || error.message || 'Échec de la connexion';
-      return thunkAPI.rejectWithValue(message);
+    } catch (error) { // error est 'unknown'
+      if (axios.isAxiosError(error)) { // Vérifier si c'est une AxiosError
+        const axiosError = error as AxiosError<{ message?: string }>; // Typer l'erreur
+        const message = axiosError.response?.data?.message || axiosError.message || 'Échec de la connexion';
+        return thunkAPI.rejectWithValue(message);
+      }
+      return thunkAPI.rejectWithValue((error as Error).message || 'Une erreur inconnue est survenue');
     }
   }
 );
@@ -55,9 +59,13 @@ export const registerUser = createAsyncThunk<
     try {
       const response = await axios.post('/api/auth/register', credentials);
       return response.data.user as UserAuthInfo;
-    } catch (error: any) {
-      const message = error.response?.data?.message || error.message || 'Échec de l\'inscription';
-      return thunkAPI.rejectWithValue(message);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<{ message?: string }>;
+        const message = axiosError.response?.data?.message || axiosError.message || 'Échec de l\'inscription';
+        return thunkAPI.rejectWithValue(message);
+      }
+      return thunkAPI.rejectWithValue((error as Error).message || 'Une erreur inconnue est survenue');
     }
   }
 );
@@ -73,9 +81,13 @@ export const fetchCurrentUser = createAsyncThunk<
     try {
       const response = await axios.get('/api/auth/me');
       return response.data.user as UserAuthInfo;
-    } catch (error: any) {
-      const message = error.response?.data?.message || error.message || 'Non autorisé';
-      return thunkAPI.rejectWithValue(message);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<{ message?: string }>;
+        const message = axiosError.response?.data?.message || axiosError.message || 'Non autorisé';
+        return thunkAPI.rejectWithValue(message);
+      }
+      return thunkAPI.rejectWithValue((error as Error).message || 'Une erreur inconnue est survenue');
     }
   }
 );
@@ -87,9 +99,13 @@ export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
     try {
       await axios.post('/api/auth/logout');
       return;
-    } catch (error: any) {
-      const message = error.response?.data?.message || error.message || 'Échec de la déconnexion';
-      return thunkAPI.rejectWithValue(message);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<{ message?: string }>;
+        const message = axiosError.response?.data?.message || axiosError.message || 'Échec de la déconnexion';
+        return thunkAPI.rejectWithValue(message);
+      }
+      return thunkAPI.rejectWithValue((error as Error).message || 'Une erreur inconnue est survenue');
     }
   }
 );
@@ -127,15 +143,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Erreur inconnue';
       })
-
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
         state.registrationSuccess = false;
       })
-      .addCase(registerUser.fulfilled, (state, action: PayloadAction<UserAuthInfo>) => {
+      .addCase(registerUser.fulfilled, (state) => {
         state.isLoading = false;
         state.registrationSuccess = true;
         state.error = null;
@@ -162,7 +177,6 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.isAuthInitialized = true;
       })
-
       .addCase(logoutUser.pending, (state) => {
         state.isLoading = true;
       })

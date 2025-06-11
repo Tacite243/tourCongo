@@ -1,4 +1,4 @@
-import { Role, User as PrismaUser } from '@prisma/client';
+import { Role } from '@prisma/client';
 import type { JWTPayload as JoseJWTPayload } from 'jose';
 
 

@@ -1,18 +1,16 @@
-// src/components/LoginForm.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/redux/store'; // Ajustez
+import { AppDispatch } from '@/redux/store';
 import { loginUser, selectAuthLoading, selectAuthError, clearAuthError, selectIsAuthenticated } from '@/redux/slices/authSlice'; // Ajustez
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-// import { useRouter } from 'next/navigation'; // Si vous voulez rediriger après connexion
+
 
 export function LoginForm() {
   const dispatch = useDispatch<AppDispatch>();
-  // const router = useRouter(); // Pour la redirection
   const isLoading = useSelector(selectAuthLoading);
   const authError = useSelector(selectAuthError);
   const isAuthenticated = useSelector(selectIsAuthenticated);
@@ -21,19 +19,14 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    // Optionnel: Rediriger si l'utilisateur est déjà connecté
-    // if (isAuthenticated) {
-    //   router.push('/dashboard'); // ou une autre page protégée
-    // }
-  }, [isAuthenticated/*, router*/]);
+  }, [isAuthenticated]);
 
   // Effacer les erreurs lorsque le composant est monté ou lorsque les identifiants changent
   useEffect(() => {
     if (authError) {
       dispatch(clearAuthError());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email, password]); // Dépendances pour effacer l'erreur si l'utilisateur recommence à taper
+  }, [email, password, authError, dispatch]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

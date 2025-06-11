@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { hashPassword, comparePassword, generateToken } from '@/lib/utils/auth.utils';
-import { Role, User } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { SafeUser, UserAuthInfo } from '@/lib/types';
 import { registerSchema, loginSchema } from '@/lib/utils/validation.schemas';
 import { z } from 'zod';
@@ -32,7 +32,7 @@ export const authService = {
       },
     });
 
-    const { password, ...safeUser } = newUser;
+    const { ...safeUser } = newUser;
     return safeUser;
   },
 
@@ -59,7 +59,7 @@ export const authService = {
       throw new Error('Email ou mot de passe incorrect.');
     }
 
-    const { password, ...safeUser } = user;
+    const { ...safeUser } = user;
     const token = await generateToken({ id: user.id, email: user.email, role: user.role });
 
     return { user: safeUser, token };
