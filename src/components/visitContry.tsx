@@ -1,3 +1,4 @@
+// src/components/VisitCountrySection.tsx
 "use client";
 
 import { Separator } from "@/components/ui/separator";
@@ -7,99 +8,105 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ExternalLink, MapPin, Coffee, TrendingUp } from "lucide-react"; // Ajout d'icônes thématiques
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "./ui/button"; // Assurez-vous que le chemin est correct
 
 export default function VisitCountrySection() {
     return (
-        <section className="flex flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8 bg-background text-foreground">
-            <div className="text-center space-y-2">
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-                    Découvrez la RDC
-                </h1>
-                <Separator className="mx-auto w-12 bg-primary h-1 rounded" />
-            </div>
+        <section className="py-16 sm:py-24 lg:py-32 bg-background text-foreground overflow-x-hidden">
+            <div className="container mx-auto px-4"> {/* Container pour centrer le contenu */}
+                <div className="text-center mb-12 sm:mb-16" data-aos="fade-up">
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
+                        Découvrez la RDC
+                    </h1>
+                    <Separator className="mx-auto mt-4 w-20 bg-primary h-1.5 rounded-full" />
+                </div>
 
-            <div className="mt-8 space-y-6 max-w-2xl text-lg text-center">
-                <p>
-                    La République Démocratique du Congo vous ouvre ses portes.{" "}
-                    <span className="text-primary font-semibold hover:underline cursor-pointer">
-                        Cliquez ici
-                    </span>{" "}
-                    pour explorer ses trésors.
-                </p>
-                <p>
-                    Du majestueux fleuve Congo aux volcans du Kivu, en passant par les parcs nationaux
-                    comme ceux de la Garamba ou de la Salonga, la RDC regorge de merveilles naturelles
-                    uniques au monde. Une expérience authentique au cœur de l’Afrique.
-                </p>
-            </div>
+                {/* Grille principale pour image et contenu */}
+                <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                    {/* Colonne de l'Image */}
+                    <div className="relative w-full h-80 sm:h-96 md:h-[500px] lg:h-full rounded-xl overflow-hidden shadow-2xl" data-aos="fade-right" data-aos-duration="1000">
+                        <Image
+                            src="/anapi.jpeg" // Remplacez par une image plus verticale ou adaptée à ce format
+                            alt="Paysage époustouflant de la République Démocratique du Congo"
+                            layout="fill"
+                            objectFit="cover"
+                            className="transform group-hover:scale-105 transition-transform duration-500 ease-in-out" // Effet de zoom léger au survol (si parent a group)
+                            quality={80}
+                            priority // Si cette section est haute dans la page
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div> {/* Overlay subtil pour le contraste */}
+                        <div className="absolute bottom-6 left-6 p-4">
+                            <h3 className="text-2xl sm:text-3xl font-bold text-white shadow-sm">Virunga, Terre de Géants</h3>
+                            <p className="text-sm sm:text-base text-gray-200 mt-1">Explorez les volcans et les gorilles de montagne.</p>
+                        </div>
+                    </div>
 
-            {/* ACCORDÉON ÉTENDU */}
-            <div className="mt-8 w-full">
-                <Accordion type="single" collapsible>
-                    <AccordionItem value="more">
-                        <AccordionTrigger className="group text-lg font-medium py-3 px-4 rounded-lg bg-muted/50 hover:bg-muted transition-all max-w-2xl mx-auto">
-                            <div className="flex items-center justify-between w-full">
-                                <span>Voir plus sur les opportunités et le tourisme</span>
-                                <ChevronDown className="h-5 w-5 transition-transform duration-300 group-data-[state=open]:rotate-180" />
-                            </div>
-                        </AccordionTrigger>
+                    {/* Colonne du Contenu (Texte et Accordéon) */}
+                    <div className="flex flex-col justify-center" data-aos="fade-left" data-aos-delay="200" data-aos-duration="1000">
+                        <div className="space-y-5 text-lg text-muted-foreground mb-8">
+                            <p>
+                                La République Démocratique du Congo, un joyau brut au cœur de l'Afrique, vous invite à une aventure sans pareille.
+                                Un pays de contrastes saisissants, où la nature exubérante côtoie une culture vibrante et une histoire profonde.
+                            </p>
+                            <p>
+                                Des sommets volcaniques des Virunga aux vastes étendues du bassin du fleuve Congo, chaque région raconte une histoire unique,
+                                attendant d'être découverte par les voyageurs audacieux et les investisseurs visionnaires.
+                            </p>
+                        </div>
 
-                        <AccordionContent className="relative mt-4 overflow-hidden w-screen px-4 sm:px-6 lg:px-8">
-                            {/* Arrière-plan full screen avec image floutée légère */}
-                            <div className="absolute inset-0 z-[-1]">
-                                <Image
-                                    src="/anapi.jpeg"
-                                    alt="RDC paysage"
-                                    fill
-                                    className="object-cover blur-[2px] opacity-20"
-                                    priority
-                                />
-                                {/* Overlay adaptatif thème clair/sombre */}
-                                <div className="absolute inset-0 bg-background/70 backdrop-blur-sm"></div>
-                            </div>
-
-                            <div className="relative max-w-4xl mx-auto px-6 py-10 space-y-6 rounded-xl bg-background/80 shadow-lg border border-muted backdrop-blur-xl">
-                                <div className="space-y-4 text-base text-muted-foreground">
+                        {/* Accordéon pour les détails supplémentaires */}
+                        <Accordion type="single" collapsible className="w-full bg-card p-0.5 rounded-xl shadow-lg border">
+                            <AccordionItem value="item-1" className="border-b">
+                                <AccordionTrigger className="group text-base sm:text-lg font-semibold py-4 px-5 hover:no-underline data-[state=open]:text-primary">
+                                    <div className="flex items-center">
+                                        <MapPin className="h-5 w-5 mr-3 text-primary/80 group-data-[state=open]:text-primary transition-colors" />
+                                        <span>Tourisme et Aventure</span>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-1 pb-4 px-5 text-sm sm:text-base text-muted-foreground space-y-3">
                                     <p>
-                                        Vous êtes investisseur ? Découvrez les nombreuses opportunités économiques
-                                        dans le tourisme, l’agriculture, les mines et bien plus.{" "}
-                                        <span className="font-semibold text-primary hover:underline cursor-pointer">
-                                            Voir les avantages fiscaux
-                                        </span>.
+                                        Parcs nationaux riches en biodiversité, volcans actifs, chutes majestueuses et une faune unique au monde.
+                                        La RDC est une destination de choix pour l'écotourisme et les expériences authentiques.
                                     </p>
+                                    <Link href="/circuits-touristiques">
+                                        <Button variant="link" className="p-0 h-auto text-primary">Découvrir nos circuits <ExternalLink className="ml-1 h-4 w-4" /></Button>
+                                    </Link>
+                                </AccordionContent>
+                            </AccordionItem>
 
+                            <AccordionItem value="item-2" className="border-b-0"> {/* Pas de bordure pour le dernier item s'il est dans un conteneur 'bg-card' */}
+                                <AccordionTrigger className="group text-base sm:text-lg font-semibold py-4 px-5 hover:no-underline data-[state=open]:text-primary">
+                                    <div className="flex items-center">
+                                         <TrendingUp className="h-5 w-5 mr-3 text-primary/80 group-data-[state=open]:text-primary transition-colors" />
+                                        <span>Opportunités d'Investissement</span>
+                                    </div>
+                                    <ChevronDown className="h-5 w-5 transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-1 pb-4 px-5 text-sm sm:text-base text-muted-foreground space-y-3">
                                     <p>
-                                        Consultez{" "}
-                                        <span className="font-semibold text-primary hover:underline cursor-pointer">
-                                            nos offres exclusives
-                                        </span>{" "}
-                                        pour les circuits touristiques et les projets d’investissement.
+                                        Avec ses vastes ressources naturelles, une population jeune et un marché en croissance, la RDC offre
+                                        un potentiel d'investissement considérable dans l'agriculture, les énergies renouvelables, les infrastructures et le tourisme.
                                     </p>
-                                </div>
+                                    <a href="#" target="_blank" rel="noopener noreferrer">
+                                        <Button variant="link" className="p-0 h-auto text-primary">Explorer les secteurs porteurs <ExternalLink className="ml-1 h-4 w-4" /></Button>
+                                    </a>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
 
-                                <div className="rounded-xl border p-4 bg-muted/30 shadow-sm text-left">
-                                    <h3 className="text-lg font-semibold mb-2 text-foreground">
-                                        Pourquoi choisir la RDC ?
-                                    </h3>
-                                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                                        <li>Richesse naturelle exceptionnelle et biodiversité rare</li>
-                                        <li>Population jeune, accueillante et multilingue</li>
-                                        <li>Potentiel touristique inexploité à fort rendement</li>
-                                        <li>Incitations fiscales pour les investisseurs étrangers</li>
-                                    </ul>
-                                </div>
-
-                                <div className="pt-4 text-center">
-                                    <button className="px-6 py-3 bg-primary text-white font-medium rounded-full shadow hover:bg-primary/90 transition-all">
-                                        Planifier votre séjour
-                                    </button>
-                                </div>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
+                        <div className="mt-10 text-center lg:text-left">
+                            <Link href="/planifier-voyage">
+                                <Button size="lg" className="rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300 transform hover:scale-105">
+                                    Commencez Votre Aventure Congolaise
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     );

@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// import { Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import { ReduxProvider } from "@/components/ReduxProvider";
 import { ThemeProvider, ThemeSynchronizer } from "@/components/ThemeProvider";
 import { SiteHeader } from "@/components/Header";
 import { AuthInitializer } from "@/components/AuthInitializer";
+import { AOSInitializer } from "@/components/AOSInitializer";
 
 
-// const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,9 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased {inter.className}`}
-      >
+      <body className={`${inter.className} bg-background text-foreground antialiased`}>
         <ReduxProvider>
           <ThemeProvider
             attribute="class"
@@ -44,8 +43,10 @@ export default function RootLayout({
           >
             <ThemeSynchronizer />
             <AuthInitializer>
-              <SiteHeader />
-              {children}
+              <AOSInitializer>
+                <SiteHeader />
+                {children}
+              </AOSInitializer>
             </AuthInitializer>
           </ThemeProvider>
         </ReduxProvider>
