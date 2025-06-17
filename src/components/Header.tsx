@@ -33,6 +33,7 @@ import { RegisterForm } from "./RegisterForm";
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "./SearchBar";
+import { useRouter } from "next/navigation";
 
 // Définition du type pour les éléments de navigation
 interface NavItemConfig {
@@ -42,11 +43,14 @@ interface NavItemConfig {
   isNew?: boolean;
 }
 
+const SCROLL_THRESHOLD_OPAQUE_HEADER = 50;
 const SCROLL_THRESHOLD_SWITCH_TO_SEARCH = 10;
 
 export function SiteHeader() {
   const pathname = usePathname();
   const dispatch = useDispatch<AppDispatch>();
+
+  const router = useRouter();
 
   // Récupérer l'état d'authentification depuis Redux
   const currentUser = useSelector(selectCurrentUser);
@@ -56,18 +60,19 @@ export function SiteHeader() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [showSearchInHeader, setShowSearchInHeader] = useState(false);
 
   const actualNavLinks: NavItemConfig[] = [
-    { href: "/logements", label: "Logements", icon: Home, isNew: false },
-    { href: "/experiences", label: "Expériences", icon: Sparkles, isNew: true },
-    { href: "/services", label: "Services", icon: BellRing, isNew: true },
+    { href: "/tourisme", label: "Tourisme", icon: Home, isNew: false },
+    { href: "/restaurant", label: "Restaurant & Services", icon: Sparkles, isNew: true },
+    { href: "/logement", label: "Logements", icon: BellRing, isNew: true },
   ];
 
   const handleLogout = () => {
     dispatch(logoutUser());
-    // Optionnel: rediriger vers la page d'accueil ou autre après déconnexion
-    // router.push('/');
+    // Rediriger vers la page d'accueil ou autre après déconnexion
+    router.push('/');
   };
 
   // Fermer les popups si l'utilisateur est authentifié (par exemple, après une connexion réussie)
@@ -79,88 +84,120 @@ export function SiteHeader() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      setIsLoginOpen(false);
-      setIsRegisterOpen(false);
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
     const handleScroll = () => {
-      const shouldShowSearch = window.scrollY > SCROLL_THRESHOLD_SWITCH_TO_SEARCH;
-      if (showSearchInHeader !== shouldShowSearch) {
-        setShowSearchInHeader(shouldShowSearch);
+      const offset = window.scrollY;
+      const scrolledEnoughForOpaque = offset > SCROLL_THRESHOLD_OPAQUE_HEADER;
+      const scrolledEnoughForSearch = offset > SCROLL_THRESHOLD_SWITCH_TO_SEARCH;
+
+      if (isHeaderScrolled !== scrolledEnoughForOpaque) {
+        setIsHeaderScrolled(scrolledEnoughForOpaque);
+      }
+      if (showSearchInHeader !== scrolledEnoughForSearch) {
+        setShowSearchInHeader(scrolledEnoughForSearch);
       }
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Check initial scroll position
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [showSearchInHeader]);
 
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isHeaderScrolled, showSearchInHeader]);
+
+  const isHomePageWithHero = pathname === "/";
+
+  // Définition des styles pour les modes du header
+  const headerBaseClasses = "fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ease-in-out";
+
+  // Mode "transparent" (en fait semi-transparent et flouté, respectant le thème)
+  // Utilisez une opacité très faible pour le fond, et un backdrop-blur
+  // Les couleurs de texte/icônes utiliseront les variables de thème (foreground, muted-foreground)
+  const headerSemiTransparentClasses = "bg-background/15 backdrop-blur-sm border-b border-transparent";
+
+  // Mode opaque standard
+  const headerOpaqueClasses = "bg-background/90 backdrop-blur-md shadow-md border-b border-border/40";
+
+  // Déterminer les classes actuelles du header
+  // Le texte sera toujours 'text-foreground' ou 'text-muted-foreground' par défaut
+  const currentHeaderClasses = isHomePageWithHero && !isHeaderScrolled
+    ? headerSemiTransparentClasses
+    : headerOpaqueClasses;
+
+  // Ce booléen peut être utile pour des ajustements fins si nécessaire, mais on essaie de l'éviter
+  // const isEffectivelyTransparentMode = isHomePageWithHero && !isHeaderScrolled;
+
+  // Logique pour la SearchBar centrale que vous aviez
   const handleCentralNavTriggerClick = () => {
+    // Si on clique sur la nav alors que la search bar devrait être là, on la force
     if (!showSearchInHeader) {
       setShowSearchInHeader(true);
+      // Forcer un scroll léger pour s'assurer que l'état du header est bien "scrolled"
       if (window.scrollY <= SCROLL_THRESHOLD_SWITCH_TO_SEARCH) {
         window.scrollTo({ top: SCROLL_THRESHOLD_SWITCH_TO_SEARCH + 1, behavior: 'smooth' });
       }
     } else {
-      // If search is already shown, clicking it might focus the main search bar on the page
-      const mainSearchBarInput = document.getElementById("main-search-bar-input");
+      // Si la search bar est déjà affichée dans le header, on pourrait vouloir focus
+      // la search bar principale sur la page (si elle existe)
+      const mainSearchBarInput = document.getElementById("main-search-bar-input"); // Assurez-vous que cet ID existe sur votre SearchBar principale
       if (mainSearchBarInput) {
         mainSearchBarInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => mainSearchBarInput.focus(), 300);
+        setTimeout(() => mainSearchBarInput.focus(), 300); // léger délai pour le scroll
       }
     }
   };
+
 
   return (
     <>
       <header
         className={cn(
-          "sticky top-0 z-50 w-full bg-background transition-all duration-200 ease-out",
-          showSearchInHeader ? "shadow-md border-b border-border/40" : "border-b border-transparent"
-          // Vous pouvez ajouter une classe ici si le header est au-dessus d'un hero sombre
-          // par exemple, pour rendre le texte du logo et des actions blanches initialement.
-          // `showSearchInHeader ? "bg-background" : "bg-transparent text-white"`
+          headerBaseClasses,
+          currentHeaderClasses
         )}
       >
-        <div className="container flex h-20 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8">
+        <div
+          className="container flex h-16 md:h-20 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8"
+        >
           {/* Section Gauche: Logo */}
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <svg /* Votre SVG Logo */ width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
-              <path d="M29.8665 10.3511C29.9465 9.54311 29.4025 8.79811 28.6115 8.51411C27.8205 8.23111 26.9335 8.47711 26.4705 9.11311L24.0005 12.7331V4.93411C24.0005 4.24911 23.4135 3.69411 22.6875 3.69411C21.9615 3.69411 21.3755 4.24911 21.3755 4.93411V10.5481L17.6165 4.66711C17.1485 3.92811 16.2435 3.61411 15.4085 3.81711C14.5745 4.02011 13.9545 4.71311 13.9235 5.55311L13.6965 11.0871L10.6245 5.01011C10.1735 4.14511 9.25051 3.74211 8.34351 3.95711C7.43651 4.17311 6.80051 4.94411 6.75751 5.84411L6.30251 15.6441L3.53151 10.1611C3.07451 9.27211 2.15851 8.87011 1.25851 9.10211C0.357511 9.33311 -0.156489 10.1381 0.0335114 11.0371C0.223511 11.9371 0.969511 12.5841 1.84251 12.6351L1.90251 12.6381L5.12551 28.0001H5.15251C5.48851 28.0001 5.80051 27.7941 5.93451 27.4881L10.1165 17.8911L12.9385 27.4881C13.0725 27.7941 13.3855 28.0001 13.7205 28.0001H13.7475L17.1525 16.0351L19.8255 27.4881C19.9595 27.7941 20.2725 28.0001 20.6075 28.0001H20.6345L26.0985 10.6991C26.0995 10.6961 26.1005 10.6941 26.1025 10.6911L29.8665 10.3511Z" fill="#FF5A5F" />
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
+              <path d="M29.8665 10.3511C29.9465 9.54311 29.4025 8.79811 28.6115 8.51411C27.8205 8.23111 26.9335 8.47711 26.4705 9.11311L24.0005 12.7331V4.93411C24.0005 4.24911 23.4135 3.69411 22.6875 3.69411C21.9615 3.69411 21.3755 4.24911 21.3755 4.93411V10.5481L17.6165 4.66711C17.1485 3.92811 16.2435 3.61411 15.4085 3.81711C14.5745 4.02011 13.9545 4.71311 13.9235 5.55311L13.6965 11.0871L10.6245 5.01011C10.1735 4.14511 9.25051 3.74211 8.34351 3.95711C7.43651 4.17311 6.80051 4.94411 6.75751 5.84411L6.30251 15.6441L3.53151 10.1611C3.07451 9.27211 2.15851 8.87011 1.25851 9.10211C0.357511 9.33311 -0.156489 10.1381 0.0335114 11.0371C0.223511 11.9371 0.969511 12.5841 1.84251 12.6351L1.90251 12.6381L5.12551 28.0001H5.15251C5.48851 28.0001 5.80051 27.7941 5.93451 27.4881L10.1165 17.8911L12.9385 27.4881C13.0725 27.7941 13.3855 28.0001 13.7205 28.0001H13.7475L17.1525 16.0351L19.8255 27.4881C19.9595 27.7941 20.2725 28.0001 20.6075 28.0001H20.6345L26.0985 10.6991C26.0995 10.6961 26.1005 10.6941 26.1025 10.6911L29.8665 10.3511Z"
+                fill="#FF5A5F" // Garder la couleur principale du logo constante. La lisibilité sera assurée par le fond du header.
+              />
             </svg>
-            <span className="font-bold text-xl text-[#FF5A5F] hidden sm:inline-block">
+            <span className="font-bold text-xl text-[#FF5A5F] hidden sm:inline-block"> {/* Idem pour le texte du logo */}
               Tour Congo
             </span>
           </Link>
 
-          {/* Section Centrale: Navigation (inchangée) */}
+          {/* Section Centrale: Navigation ou SearchBar */}
           <div className="flex-1 flex justify-center items-center min-w-0 px-2 sm:px-0 relative h-12">
+            {/* Logique pour afficher soit la nav, soit la search bar compacte */}
+            {/* Version simplifiée: la nav est toujours là, la search bar compacte apparait dessus si isHeaderScrolled */}
             <div
               className={cn(
-                // "flex items-center justify-center bg-background border border-border rounded-full shadow-md py-2 px-1 sm:px-2 cursor-pointer hover:shadow-lg transition-all duration-300 ease-in-out absolute inset-0",
-                showSearchInHeader
-                  ? "opacity-0 scale-90 pointer-events-none"
-                  : "opacity-100 scale-100"
+                "flex items-center justify-center transition-opacity duration-300",
+                showSearchInHeader ? "opacity-0 pointer-events-none" : "opacity-100"
               )}
-              onClick={handleCentralNavTriggerClick}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handleCentralNavTriggerClick()}
+              onClick={!showSearchInHeader ? handleCentralNavTriggerClick : undefined}
+              role={!showSearchInHeader ? "button" : undefined}
+              tabIndex={!showSearchInHeader ? 0 : undefined}
+              onKeyDown={!showSearchInHeader ? (e) => e.key === 'Enter' && handleCentralNavTriggerClick() : undefined}
             >
-              <nav className="flex flex-1 items-center justify-center gap-1 sm:gap-2">
+              <nav className="flex items-center justify-center gap-1 sm:gap-2">
                 {actualNavLinks.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`relative group flex flex-col items-center px-2 sm:px-3 py-2 text-sm font-medium transition-colors hover:text-foreground ${pathname === item.href ? "text-foreground" : "text-muted-foreground"}`}
+                    className={cn(
+                      "relative group flex items-center px-2 sm:px-3 py-2 text-sm font-medium transition-colors hover:text-foreground",
+                      // La couleur de base est gérée par la classe text-foreground/text-muted-foreground du header parent
+                      pathname === item.href ? "text-foreground font-semibold" : "text-muted-foreground"
+                    )}
                   >
-                    <div className="flex items-center gap-1">
-                      {item.icon && <item.icon className={`h-5 w-5 hidden sm:inline-block ${pathname === item.href ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"}`} />}
-                      <span>{item.label}</span>
-                    </div>
-                    {pathname === item.href && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 bg-foreground rounded-full mt-1"></span>}
+                    {item.icon && <item.icon className={cn("h-5 w-5 mr-1.5 hidden sm:inline-block", pathname === item.href ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")} />}
+                    <span>{item.label}</span>
+                    {pathname === item.href && (
+                      <span className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full mt-1", "bg-foreground")}></span>
+                    )}
                   </Link>
                 ))}
               </nav>
@@ -168,34 +205,45 @@ export function SiteHeader() {
             {/* Barre de recherche compacte dans le header */}
             <div
               className={cn(
-                "flex items-center justify-center w-auto transition-all duration-300 ease-in-out absolute inset-0",
-                showSearchInHeader
-                  ? "opacity-100 scale-100"
-                  : "opacity-0 scale-95 pointer-events-none"
+                "flex items-center justify-center w-auto transition-opacity duration-300 absolute inset-0",
+                showSearchInHeader ? "opacity-100" : "opacity-0 pointer-events-none"
               )}
             >
-              {showSearchInHeader && <SearchBar inHeaderCompactMode={true} />}
+              {/* Le composant SearchBar doit être stylé pour bien s'intégrer ici */}
+              <SearchBar inHeaderCompactMode={true} />
             </div>
           </div>
 
+
           {/* Section Droite: Actions utilisateur */}
           <div className="flex items-center justify-end space-x-2 sm:space-x-4">
-            <Button variant="ghost" className="hidden sm:inline-flex text-sm font-medium hover:bg-accent/60 dark:hover:bg-accent/30 rounded-full px-4 py-2">
+            <Button
+              variant="ghost" // S'adapte au thème
+              className={cn(
+                "hidden sm:inline-flex text-sm font-medium rounded-full px-4 py-2",
+                "hover:bg-accent focus:bg-accent text-foreground" // S'assurer que text-foreground est là pour la couleur de base
+              )}
+            >
               Devenir hôte
             </Button>
             <ThemeToggleButton />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex h-10 w-auto items-center gap-2 rounded-full border-border/70 px-2 py-1.5 pl-3 hover:shadow-md transition-shadow bg-card">
-                  <MenuIcon className="h-5 w-5 text-foreground/80" />
+                <Button
+                  variant="outline" // S'adapte au thème
+                  className={cn(
+                    "flex h-10 w-auto items-center gap-2 rounded-full px-2 py-1.5 pl-3 hover:shadow-md transition-shadow",
+                    "border-border text-foreground" // Utiliser border-border et text-foreground pour s'adapter
+                  )}
+                >
+                  <MenuIcon className="h-5 w-5" /> {/* Héritera la couleur du texte */}
                   <Avatar className="h-7 w-7">
-                    {isAuthenticated && currentUser?.name ? ( /* Utiliser currentUser de Redux */
-                      // Pour l'avatar, vous pouvez ajouter une URL d'avatar à votre modèle User et UserAuthInfo
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                    {isAuthenticated && currentUser?.name ? (
+                      <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                         {currentUser.name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     ) : (
-                      <AvatarFallback className="bg-muted text-muted-foreground">
+                      <AvatarFallback className="bg-muted text-muted-foreground"> {/* s'adapte au thème */}
                         <UserCircle className="h-5 w-5" />
                       </AvatarFallback>
                     )}
@@ -207,27 +255,46 @@ export function SiteHeader() {
                   <>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{currentUser.name || currentUser.email}</p>
+                        <p className="text-sm font-medium leading-none">
+                          {currentUser.name || currentUser.email}
+                        </p>
                         <p className="text-xs leading-none text-muted-foreground">
                           {currentUser.email}
                         </p>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => alert('Navigation vers profil')}>Profil</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => alert('Navigation vers voyages')}>Mes voyages</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => alert('Profil')}>Profil</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => alert('Voyages')}>Mes voyages</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={handleLogout} className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/50">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Déconnexion
+                    <DropdownMenuItem
+                      onSelect={handleLogout}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/50"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" /> Déconnexion
                     </DropdownMenuItem>
                   </>
                 ) : (
                   <>
-                    <DropdownMenuItem onSelect={() => { setIsRegisterOpen(true); setIsLoginOpen(false); }} className="font-semibold">
+                    <DropdownMenuItem
+                      onSelect={
+                        () => {
+                          setIsRegisterOpen(true);
+                          setIsLoginOpen(false);
+                        }
+                      }
+                      className="font-semibold"
+                    >
                       Inscription
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => { setIsLoginOpen(true); setIsRegisterOpen(false); }}>
+                    <DropdownMenuItem
+                      onSelect={
+                        () => {
+                          setIsLoginOpen(true);
+                          setIsRegisterOpen(false);
+                        }
+                      }
+                    >
                       Connexion
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -241,34 +308,31 @@ export function SiteHeader() {
         </div>
       </header>
 
-      {/* Popup de Connexion */}
-      <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      <Dialog
+        open={isLoginOpen}
+        onOpenChange={setIsLoginOpen}
+      >
+        <DialogContent
+          className="sm:max-w-[425px]"
+        >
           <DialogHeader>
             <DialogTitle>Connexion</DialogTitle>
-            <DialogDescription>
-              Accédez à votre compte pour continuer.
-            </DialogDescription>
+            <DialogDescription>Accédez à votre compte pour continuer.</DialogDescription>
           </DialogHeader>
           <LoginForm />
         </DialogContent>
       </Dialog>
-
-      {/* Popup d'Inscription */}
-      <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
+      <Dialog
+        open={isRegisterOpen} onOpenChange={setIsRegisterOpen}
+      >
         <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Inscription</DialogTitle>
-            <DialogDescription>
-              Créez un compte pour profiter de toutes nos fonctionnalités.
-            </DialogDescription>
-          </DialogHeader>
-          <RegisterForm /> {/* Votre composant RegisterForm ici */}
-        </DialogContent>
-      </Dialog>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-8" id="main-search-bar-anchor">
+          <DialogHeader><DialogTitle>Inscription</DialogTitle>
+            <DialogDescription>Créez un compte pour profiter de toutes nos fonctionnalités.</DialogDescription>
+          </DialogHeader><RegisterForm /></DialogContent></Dialog>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-8 pt-20 md:pt-24" id="main-search-bar-anchor"> {/* Ajout de padding-top */}
         <SearchBar />
       </div>
     </>
   );
-}
+};
