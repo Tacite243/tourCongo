@@ -1,3 +1,4 @@
+import AttractivePlacesCarousel from "@/components/AttractivePlacesCaousel";
 import { HeroSection } from "@/components/hero";
 import VisitCountrySection from "@/components/visitContry";
 
@@ -18,6 +19,7 @@ export default function HomePage() {
         showPlayButton={true}
       />
       <VisitCountrySection />
+      <AttractivePlacesCarousel />
     </main>
   );
 }
