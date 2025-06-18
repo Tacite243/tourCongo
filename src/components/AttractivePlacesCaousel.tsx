@@ -138,7 +138,7 @@ export default function AttractivePlacesCarousel() {
         if (emblaApi && autoplayRef.current) {
             emblaApi.reInit(OPTIONS, [autoplayRef.current]);
         }
-    }, [emblaApi, OPTIONS]); // Pas besoin d'inclure autoplayRef.current ici car il est stable
+    }, [emblaApi]); // Pas besoin d'inclure autoplayRef.current ici car il est stable
 
 
     if (!attractivePlaces || attractivePlaces.length === 0) return null;
