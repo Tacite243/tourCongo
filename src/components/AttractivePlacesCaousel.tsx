@@ -3,15 +3,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
-import { EmblaOptionsType } from 'embla-carousel'
-import Autoplay from 'embla-carousel-autoplay';
-import { ChevronLeft, ChevronRight, Info, ExternalLink } from 'lucide-react'; // Ajout de ExternalLink
+import { EmblaOptionsType } from 'embla-carousel';
+import Autoplay, { AutoplayType } from 'embla-carousel-autoplay'; // Importer AutoplayType
+import { ChevronLeft, ChevronRight, Info, ExternalLink } from 'lucide-react';
 
+// ... (interface Place et attractivePlaces inchangées) ...
 interface Place {
     id: string;
     name: string;
     imageUrl: string;
-    tagline?: string; // Un slogan court pour chaque lieu
+    tagline?: string;
     description: string;
     link?: string;
 }
@@ -22,7 +23,7 @@ const attractivePlaces: Place[] = [
         name: 'Parc National des Virunga',
         imageUrl: '/virunga.jpeg',
         tagline: 'Terre des Géants Volcaniques',
-        description: 'Site du patrimoine mondial de l\'UNESCO, célèbre pour ses gorilles de montagne et ses volcans actifs majestueux.',
+        description: "Site du patrimoine mondial de l'UNESCO, célèbre pour ses gorilles de montagne et ses volcans actifs majestueux.",
         link: '/virunga'
     },
     {
@@ -30,28 +31,28 @@ const attractivePlaces: Place[] = [
         name: 'Chutes de la Lofoyi',
         imageUrl: '/lofoyi.jpeg',
         tagline: 'La Symphonie Aquatique',
-        description: 'Des chutes d\'eau spectaculaires offrant des paysages à couper le souffle, une immersion totale dans la puissance de la nature.',
+        description: "Des chutes d'eau spectaculaires offrant des paysages à couper le souffle, une immersion totale dans la puissance de la nature.",
     },
     {
         id: '3',
         name: 'Fleuve Congo',
         imageUrl: '/fleuve-congo.jpeg',
-        tagline: 'L\'Artère Vitale de l\'Afrique',
-        description: 'Le deuxième plus long fleuve d\'Afrique, offrant des croisières mémorables au cœur d\'une biodiversité foisonnante.',
+        tagline: "L'Artère Vitale de l'Afrique",
+        description: "Le deuxième plus long fleuve d'Afrique, offrant des croisières mémorables au cœur d'une biodiversité foisonnante.",
     },
     {
         id: '4',
         name: 'Parc National de la Salonga',
         imageUrl: '/salonga.jpeg',
         tagline: 'Le Poumon Vert Intact',
-        description: 'La plus grande réserve de forêt tropicale humide d\'Afrique, sanctuaire des bonobos et des éléphants de forêt.',
+        description: "La plus grande réserve de forêt tropicale humide d'Afrique, sanctuaire des bonobos et des éléphants de forêt.",
     },
     {
         id: '5',
         name: 'Mont Nyiragongo',
         imageUrl: '/nyiragongo.jpeg',
         tagline: 'Le Cœur Ardent du Kivu',
-        description: 'Un volcan actif avec l\'un des plus grands lacs de lave permanents au monde. Une ascension nocturne inoubliable.',
+        description: "Un volcan actif avec l'un des plus grands lacs de lave permanents au monde. Une ascension nocturne inoubliable.",
         link: '/nyiragongo'
     },
     {
@@ -63,39 +64,89 @@ const attractivePlaces: Place[] = [
     },
 ];
 
-const OPTIONS: EmblaOptionsType = { loop: true, align: 'start', dragFree: true };
+
+const OPTIONS: EmblaOptionsType = { loop: true, align: 'start', dragFree: false /* dragFree à false peut aider Autoplay */ };
 
 export default function AttractivePlacesCarousel() {
-    const autoplay = useRef(
-        Autoplay({
-            delay: 4500, // Légèrement plus long pour laisser le temps d'admirer
-            stopOnInteraction: true, // Permet à l'utilisateur de stopper avec un drag
-            stopOnMouseEnter: true,
-            rootNode: (emblaRoot) => emblaRoot.parentElement,
-        })
+    // Stocker l'instance du plugin dans un ref pour y accéder
+    const autoplayRef = useRef<AutoplayType | null>(null);
+
+    // Initialiser le plugin Autoplay une seule fois et le stocker
+    useEffect(() => {
+        // Cette initialisation ne se fera qu'une fois après le premier rendu
+        // car le tableau de dépendances est vide.
+        autoplayRef.current = Autoplay({
+            delay: 3000, // Réduire un peu le délai pour voir plus vite si ça marche
+            stopOnInteraction: false, // L'utilisateur peut interagir, autoplay reprendra après mouse leave
+            stopOnMouseEnter: true,   // L'autoplay s'arrête quand la souris est sur le carrousel
+        });
+
+        // Nettoyage lors du démontage du composant
+        return () => {
+            if (autoplayRef.current) {
+                autoplayRef.current.destroy();
+                autoplayRef.current = null;
+            }
+        };
+    }, []);
+
+
+    const [emblaRef, emblaApi] = useEmblaCarousel(
+        OPTIONS,
+        // Passer le plugin Autoplay au hook. S'assurer qu'il est initialisé.
+        // Si autoplayRef.current est null au premier rendu, on peut passer un tableau vide
+        // et réinitialiser embla quand autoplayRef.current est prêt.
+        // Cependant, Embla gère bien si un plugin est ajouté/retiré.
+        // Pour être sûr, on passe l'instance stockée dans le ref.
+        autoplayRef.current ? [autoplayRef.current] : []
     );
 
-    const [emblaRef, emblaApi] = useEmblaCarousel(OPTIONS, [autoplay.current]);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-    const scrollPrev = useCallback(() => { if (emblaApi) emblaApi.scrollPrev(); }, [emblaApi]);
-    const scrollNext = useCallback(() => { if (emblaApi) emblaApi.scrollNext(); }, [emblaApi]);
+    const scrollPrev = useCallback(() => {
+        if (emblaApi) {
+            emblaApi.scrollPrev();
+            if (autoplayRef.current) autoplayRef.current.reset(); // Redémarre le timer de l'autoplay
+        }
+    }, [emblaApi]);
 
+    const scrollNext = useCallback(() => {
+        if (emblaApi) {
+            emblaApi.scrollNext();
+            if (autoplayRef.current) autoplayRef.current.reset(); // Redémarre le timer de l'autoplay
+        }
+    }, [emblaApi]);
+
+    // Gérer le survol pour la description et pour potentiellement contrôler l'autoplay
+    const handleMouseEnterCard = (index: number) => {
+        setHoveredIndex(index);
+        // stopOnMouseEnter dans Autoplay devrait gérer l'arrêt.
+        // Si vous voulez être plus explicite ou si stopOnMouseEnter ne fonctionne pas comme attendu
+        // à cause de la structure des overlays:
+        // if (autoplayRef.current) autoplayRef.current.stop();
+    };
+
+    const handleMouseLeaveCard = () => {
+        setHoveredIndex(null);
+        // stopOnMouseEnter dans Autoplay (quand la souris quitte le rootNode) devrait relancer.
+        // Pour forcer la reprise si on a stoppé manuellement :
+        // if (autoplayRef.current) autoplayRef.current.play();
+    };
+
+    // Réinitialiser embla si le plugin autoplay change (ce qui ne devrait arriver qu'une fois ici)
     useEffect(() => {
-        return () => { if (autoplay.current) autoplay.current.destroy(); };
-    }, []);
+        if (emblaApi && autoplayRef.current) {
+            emblaApi.reInit(OPTIONS, [autoplayRef.current]);
+        }
+    }, [emblaApi, OPTIONS]); // Pas besoin d'inclure autoplayRef.current ici car il est stable
+
 
     if (!attractivePlaces || attractivePlaces.length === 0) return null;
 
     return (
-        <section
-            className="py-20 sm:py-28 bg-gradient-to-b from-background via-slate-900/10 dark:via-slate-50/5 to-background text-foreground overflow-hidden" // Ajout de overflow-hidden ici
-            // Animation d'entrée pour toute la section
-            data-aos="zoom-in-up"
-            data-aos-duration="1200"
-            data-aos-easing="ease-out-cubic"
-        >
+        <section /* ... props de section ... */ >
             <div className="container mx-auto px-4">
+                {/* ... Titre et sous-titre ... */}
                 <div className="text-center mb-12 sm:mb-16">
                     <h2
                         className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary via-emerald-400 to-sky-500"
@@ -111,25 +162,27 @@ export default function AttractivePlacesCarousel() {
                         data-aos-delay="400"
                         data-aos-duration="1000"
                     >
-                        Plongez au cœur d'une terre de merveilles, où chaque paysage raconte une épopée et chaque rencontre est une inspiration.
+                        Plongez au cœur d’une terre de merveilles, où chaque paysage raconte une épopée et chaque rencontre est une inspiration.
                     </p>
                 </div>
 
                 <div className="relative group" data-aos="fade-up" data-aos-delay="600" data-aos-duration="1200">
-                    <div className="overflow-hidden rounded-xl py-2" ref={emblaRef}> {/* py-2 pour voir l'ombre */}
+                    {/* Le conteneur auquel emblaRef est attaché est le rootNode pour stopOnMouseEnter */}
+                    <div className="overflow-hidden rounded-xl py-2" ref={emblaRef}>
                         <div className="flex -ml-4">
                             {attractivePlaces.map((place, index) => (
                                 <div
                                     className="relative flex-[0_0_90%] sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] xl:flex-[0_0_22%] pl-4 group/slide"
                                     key={place.id}
-                                    onMouseEnter={() => setHoveredIndex(index)}
-                                    onMouseLeave={() => setHoveredIndex(null)}
-                                    // Animation AOS pour chaque carte avec un décalage
+                                    onMouseEnter={() => handleMouseEnterCard(index)}
+                                    onMouseLeave={handleMouseLeaveCard}
                                     data-aos="zoom-in"
-                                    data-aos-delay={100 + index * 100} // Délai progressif pour un effet de "stagger"
+                                    data-aos-delay={100 + index * 100}
                                     data-aos-duration="800"
-                                    data-aos-anchor-placement="top-bottom" // Déclenche quand le haut de l'élément atteint le bas de la fenêtre
+                                    data-aos-anchor-placement="top-bottom"
                                 >
+                                    {/* ... Contenu de la carte (Image, titre, description au survol) ... */}
+                                    {/* Reste du code de la carte inchangé */}
                                     <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 ease-out transform hover:scale-[1.03] hover:shadow-cyan-500/30 dark:hover:shadow-cyan-400/20 cursor-pointer">
                                         <Image
                                             src={place.imageUrl}
@@ -142,23 +195,21 @@ export default function AttractivePlacesCarousel() {
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-100 group-hover/slide:opacity-60 transition-opacity duration-500"></div>
 
-                                        {/* Titre et Slogan */}
                                         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-white z-[5] transition-transform duration-500 ease-out group-hover/slide:translate-y-[-10px]">
                                             <h3 className="text-xl sm:text-2xl font-bold tracking-tight">{place.name}</h3>
                                             {place.tagline && <p className="text-sm text-sky-300/90 font-medium mt-1 opacity-90 group-hover/slide:opacity-100">{place.tagline}</p>}
                                         </div>
 
-                                        {/* Description au survol (améliorée) */}
                                         <div
                                             className={`absolute inset-0 bg-black/85 backdrop-blur-md p-6 flex flex-col justify-end items-start text-left text-white
                                                         opacity-0 pointer-events-none group-hover/slide:opacity-100 group-hover/slide:pointer-events-auto
                                                         transition-all duration-500 ease-in-out transform group-hover/slide:translate-y-0 translate-y-8
                                                         ${hoveredIndex === index ? 'opacity-100 pointer-events-auto translate-y-0 z-10' : 'opacity-0 translate-y-8'}`}
                                         >
-                                            <div> {/* Conteneur pour limiter la hauteur du texte */}
+                                            <div>
                                                 <Info className="w-7 h-7 mb-3 text-primary" />
                                                 <h4 className="text-2xl font-semibold mb-2">{place.name}</h4>
-                                                <p className="text-[0.9rem] leading-relaxed mb-5 line-clamp-4">{place.description}</p> {/* line-clamp pour limiter le texte */}
+                                                <p className="text-[0.9rem] leading-relaxed mb-5 line-clamp-4">{place.description}</p>
                                             </div>
                                             {place.link && (
                                                 <a
@@ -178,7 +229,7 @@ export default function AttractivePlacesCarousel() {
                         </div>
                     </div>
 
-                    {/* Boutons de navigation (style amélioré) */}
+                    {/* ... Boutons de navigation ... */}
                     {emblaApi && (
                         <>
                             <button
@@ -201,4 +252,4 @@ export default function AttractivePlacesCarousel() {
             </div>
         </section>
     );
-}
+};
