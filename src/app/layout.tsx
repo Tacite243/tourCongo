@@ -7,6 +7,7 @@ import { ThemeProvider, ThemeSynchronizer } from "@/components/ThemeProvider";
 import { SiteHeader } from "@/components/Header";
 import { AuthInitializer } from "@/components/AuthInitializer";
 import { AOSInitializer } from "@/components/AOSInitializer";
+import { Footer } from "@/components/Footer";
 
 // Polices avec les variables utilisées dans <body>
 const inter = Inter({ subsets: ["latin"] });
@@ -38,6 +39,7 @@ export default function RootLayout({
               <AOSInitializer>
                 <SiteHeader />
                 {children}
+                <Footer />
               </AOSInitializer>
             </AuthInitializer>
           </ThemeProvider>

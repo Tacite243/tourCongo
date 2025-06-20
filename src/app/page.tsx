@@ -1,15 +1,20 @@
+// "use client"
+
 import AttractivePlacesCarousel from "@/components/AttractivePlacesCaousel";
+import { BriefIntroductionSection } from "@/components/BriefIntroductionSection";
+import { CallToActionSection } from "@/components/CallToActionSection";
+import { ExperiencesHighlightSection } from "@/components/ExperiencesHighlightSection";
+import { FaqAccordionSection } from "@/components/FaqAccordionSection";
 import { HeroSection } from "@/components/hero";
+import { KeyFiguresSection } from "@/components/KeyFiguresSection";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
 import VisitCountrySection from "@/components/visitContry";
-
-
+import { AboutSection } from "@/components/AboutSection";
+import { ContactSection } from "@/components/ContactSection";
 
 export default function HomePage() {
   return (
-    <main
-      // className="flex min-h-screen flex-col items-center justify-between p-24"
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex"></div>
+    <main>
       <HeroSection
         videoSrc='/videos/vid.mp4'
         title="Explorez le Congo Merveilleux"
@@ -18,8 +23,16 @@ export default function HomePage() {
         ctaLink="/logements"
         showPlayButton={true}
       />
+      <BriefIntroductionSection />
       <VisitCountrySection />
-      <AttractivePlacesCarousel />
+      {/* <KeyFiguresSection /> */}
+      {/* <AttractivePlacesCarousel /> */}
+      {/* <ExperiencesHighlightSection />
+      <AboutSection />
+      <TestimonialsSection />
+      <ContactSection />
+      <FaqAccordionSection />
+      <CallToActionSection /> */}
     </main>
   );
 }
