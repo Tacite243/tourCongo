@@ -1,11 +1,11 @@
-// src/components/KeyFiguresSection.tsx
 "use client";
-import { Landmark, Trees, Users, ShieldCheck } from "lucide-react"; // Exemples d'icônes
+
+import { Landmark, Trees, Users, ShieldCheck } from "lucide-react";
 
 const figures = [
     { icon: Trees, value: "+10", label: "Parcs Nationaux & Réserves", description: "Protégeant une biodiversité unique." },
     { icon: Landmark, value: "5", label: "Sites UNESCO", description: "Trésors du patrimoine mondial." },
-    { icon: Users, value: "+250", label: "Groupes Ethniques", description: "Une mosaïque culturelle vibrante." },
+    { icon: Users, value: "+450", label: "Groupes Ethniques", description: "Une mosaïque culturelle vibrante." },
     { icon: ShieldCheck, value: "N°2", label: "Forêt Tropicale Mondiale", description: "Poumon vital de la planète." },
 ];
 

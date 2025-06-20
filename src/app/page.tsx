@@ -25,7 +25,7 @@ export default function HomePage() {
       />
       <BriefIntroductionSection />
       <VisitCountrySection />
-      {/* <KeyFiguresSection /> */}
+      <KeyFiguresSection />
       {/* <AttractivePlacesCarousel /> */}
       {/* <ExperiencesHighlightSection />
       <AboutSection />
