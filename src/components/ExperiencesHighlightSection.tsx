@@ -1,15 +1,17 @@
 "use client";
 
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Mountain, Users2, Waves } from "lucide-react";
+import { Mountain, Users2, Waves, ExternalLink } from "lucide-react";
+
 
 const experiences = [
     {
         title: "Aventure Indomptée",
         description: "Trekking sur des volcans actifs, safaris à la rencontre des grands animaux, rafting sur des rapides tumultueux.",
-        imageUrl: "/baner-right-image-03.jpg",
+        imageUrl: "/images/baner-right-image-03.jpg",
         link: "/aventures",
         aos: "fade-right",
         icon: Mountain,
@@ -17,7 +19,7 @@ const experiences = [
     {
         title: "Immersion Culturelle Profonde",
         description: "Participez à des festivals colorés, rencontrez des communautés locales chaleureuses et découvrez un artisanat ancestral.",
-        imageUrl: "/images/experience-culture.jpg", // Image culturelle
+        imageUrl: "/images/baner-right-image-03.jpg",
         link: "/culture",
         aos: "fade-up",
         icon: Users2,
@@ -25,7 +27,7 @@ const experiences = [
     {
         title: "Évasion Sereine",
         description: "Détendez-vous dans des lodges éco-responsables nichés dans une nature luxuriante, au bord de lacs paisibles.",
-        imageUrl: "/images/experience-serenite.jpg", // Image de détente
+        imageUrl: "/images/baner-right-image-03.jpg",
         link: "/serenite",
         aos: "fade-left",
         icon: Waves,
@@ -48,7 +50,7 @@ export function ExperiencesHighlightSection() {
                     {experiences.map((exp, index) => (
                         <div
                             key={exp.title}
-                            className="group relative rounded-xl overflow-hidden shadow-xl transform transition-all duration-500 hover:scale-105 hover:shadow-primary/30"
+                            className="group relative aspect-[3/4] sm:aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-xl transform transition-all duration-500 hover:scale-105 hover:shadow-primary/30"
                             data-aos={exp.aos}
                             data-aos-delay={150 * index}
                             data-aos-duration="900"
@@ -59,14 +61,19 @@ export function ExperiencesHighlightSection() {
                                 layout="fill"
                                 objectFit="cover"
                                 className="transition-transform duration-700 ease-in-out group-hover:scale-110"
+                                quality={75}
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col justify-end p-6">
                                 <exp.icon className="h-10 w-10 text-white/80 mb-3 opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
                                 <h3 className="text-2xl font-bold text-white mb-2">{exp.title}</h3>
                                 <p className="text-sm text-gray-200 mb-4 line-clamp-3">{exp.description}</p>
-                                <Link href={exp.link} className="mt-auto">
-                                    <Button variant="secondary" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border-white/30">
-                                        En savoir plus
+                                <Link href={exp.link || '#'} className="mt-auto self-start">
+                                    <Button
+                                        variant="secondary"
+                                        className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border-white/30 transition-all duration-300 group-hover:shadow-lg"
+                                    >
+                                        En savoir plus <ExternalLink className="ml-2 h-4 w-4 opacity-80 group-hover:opacity-100" />
                                     </Button>
                                 </Link>
                             </div>
