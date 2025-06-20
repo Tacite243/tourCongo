@@ -71,10 +71,8 @@ export default function VisitCountrySection() {
                             <AccordionItem value="item-1" className="border-b">
                                 <AccordionTrigger className="group text-base sm:text-lg font-semibold py-4 px-5 hover:no-underline data-[state=open]:text-primary">
                                     <div className="flex items-center">
-                                        <MapPin className="h-5 w-5 mr-3 text-primary/80 group-data-[state=open]:text-primary transition-colors" />
                                         <span>Tourisme et Aventure</span>
                                     </div>
-                                    <ChevronDown className="h-5 w-5 transition-transform duration-300 group-data-[state=open]:rotate-180" />
                                 </AccordionTrigger>
                                 <AccordionContent className="pt-1 pb-4 px-5 text-sm sm:text-base text-muted-foreground space-y-3">
                                     <p>
@@ -92,10 +90,8 @@ export default function VisitCountrySection() {
                             <AccordionItem value="item-2" className="border-b-0">
                                 <AccordionTrigger className="group text-base sm:text-lg font-semibold py-4 px-5 hover:no-underline data-[state=open]:text-primary">
                                     <div className="flex items-center">
-                                        <TrendingUp className="h-5 w-5 mr-3 text-primary/80 group-data-[state=open]:text-primary transition-colors" />
                                         <span>Opportunités d&rsquo;Investissement</span>
                                     </div>
-                                    <ChevronDown className="h-5 w-5 transition-transform duration-300 group-data-[state=open]:rotate-180" />
                                 </AccordionTrigger>
                                 <AccordionContent className="pt-1 pb-4 px-5 text-sm sm:text-base text-muted-foreground space-y-3">
                                     <p>
