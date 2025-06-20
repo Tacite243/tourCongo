@@ -1,10 +1,10 @@
-// src/components/AboutSection.tsx
 "use client";
+
 
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Heart, Compass, Users } from "lucide-react"; // Icônes thématiques
+import { Heart, Compass, Users } from "lucide-react";
 
 export function AboutSection() {
     return (
@@ -53,7 +53,7 @@ export function AboutSection() {
                     </div>
                     <div className="relative w-full aspect-square sm:aspect-video lg:aspect-[4/5] rounded-xl overflow-hidden shadow-2xl order-first lg:order-last" data-aos="fade-left" data-aos-delay="300" data-aos-duration="1000">
                         <Image
-                            src="/images/about-us-image.jpg" // Image représentative de votre mission ou de l'équipe
+                            src="/images/baner-right-image-03.jpg" // Image représentative de votre mission ou de l'équipe
                             alt="L'équipe Tour Congo ou un paysage inspirant de la RDC"
                             layout="fill"
                             objectFit="cover"

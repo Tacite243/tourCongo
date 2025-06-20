@@ -28,7 +28,7 @@ export default function HomePage() {
       <KeyFiguresSection />
       <AttractivePlacesCarousel />
       <ExperiencesHighlightSection />
-      {/* <AboutSection /> */}
+      <AboutSection />
       {/* <TestimonialsSection /> */}
       {/* <ContactSection /> */}
       {/* <FaqAccordionSection /> */}
