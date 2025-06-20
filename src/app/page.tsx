@@ -30,9 +30,9 @@ export default function HomePage() {
       <ExperiencesHighlightSection />
       <AboutSection />
       <TestimonialsSection />
-      {/* <ContactSection /> */}
-      {/* <FaqAccordionSection /> */}
-      {/* <CallToActionSection /> */}
+      <ContactSection />
+      <FaqAccordionSection />
+      <CallToActionSection />
     </main>
   );
 }

@@ -9,15 +9,15 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 export function CallToActionSection() {
   return (
     <section className="relative py-20 sm:py-32 overflow-hidden" data-aos="zoom-in" data-aos-duration="1000">
-      {/* Image de fond avec effet de parallaxe simulé (ajustez le chemin de l'image) */}
+      {/* Image de fond avec effet de parallaxe simulé */}
       <div className="absolute inset-0 z-[-1]">
         <Image
-          src="/images/cta-background.jpg" // Image de fond inspirante (ex: un beau paysage congolais)
+          src="/fleuve-congo.jpeg"
           alt="Paysage congolais invitant à l'aventure"
           layout="fill"
           objectFit="cover"
           quality={85}
-          className="opacity-30 dark:opacity-20" // Ajustez l'opacité
+          className="opacity-30 dark:opacity-100" // Ajustez l'opacité
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent"></div>
       </div>
