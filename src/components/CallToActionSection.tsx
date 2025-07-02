@@ -23,12 +23,12 @@ export function CallToActionSection() {
       </div>
 
       <div className="container mx-auto px-4 relative z-10 text-center">
-        <Sparkles className="h-16 w-16 text-primary mx-auto mb-6 opacity-80" data-aos="zoom-in" data-aos-delay="200"/>
+        <Sparkles className="h-16 w-16 text-primary mx-auto mb-6 opacity-80" data-aos="zoom-in" data-aos-delay="200" />
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-6" data-aos="fade-up" data-aos-delay="300">
           Votre Aventure Congolaise <br className="hidden sm:block" /> Commence Maintenant
         </h2>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed" data-aos="fade-up" data-aos-delay="400">
-          N'attendez plus pour découvrir les trésors cachés et la culture vibrante de la RDC.
+          N&rsquo;attendez plus pour découvrir les trésors cachés et la culture vibrante de la RDC.
           Des expériences uniques et des souvenirs inoubliables vous attendent.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4" data-aos="fade-up" data-aos-delay="500">

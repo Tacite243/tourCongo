@@ -9,7 +9,7 @@ const JWT_SECRET_ENV = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN_STRING = process.env.JWT_EXPIRES_IN || '1d';
 
 if (!JWT_SECRET_ENV) {
-  throw new Error('JWT_SECRET is not defined in environment variables. Please check your .env file.');
+  throw new Error('JWT_SECRET is not defined in environment variables. Please check your . file.');
 }
 const JWT_SECRET_UINT8ARRAY = new TextEncoder().encode(JWT_SECRET_ENV);
 

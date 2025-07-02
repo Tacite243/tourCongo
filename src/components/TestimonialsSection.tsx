@@ -91,7 +91,7 @@ export function TestimonialsSection() {
                 console.warn("Embla reInit avec autoplay a échoué (peut arriver lors du HMR):", e)
             }
         }
-    }, [emblaApi, OPTIONS]); // Ne pas ajouter autoplayPluginRef.current aux dépendances ici pour éviter boucle
+    }, [emblaApi]); // Ne pas ajouter autoplayPluginRef.current aux dépendances ici pour éviter boucle
 
 
     const scrollPrev = useCallback(() => {

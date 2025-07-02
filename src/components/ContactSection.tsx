@@ -13,7 +13,7 @@ export function ContactSection() {
                     Prêt à Discuter de Votre Aventure ?
                 </h2>
                 <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-                    Notre équipe d'experts est à votre écoute pour répondre à toutes vos questions, vous aider à planifier
+                    Notre équipe d&rsquo;experts est à votre écoute pour répondre à toutes vos questions, vous aider à planifier
                     votre voyage sur mesure ou explorer des opportunités de partenariat.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6">

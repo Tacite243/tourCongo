@@ -43,7 +43,7 @@ export function ExperiencesHighlightSection() {
                         Vivez des Moments Inoubliables
                     </h2>
                     <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="200">
-                        Que vous soyez en quête d'adrénaline, de découvertes culturelles ou de tranquillité, la RDC a une expérience unique à vous offrir.
+                        Que vous soyez en quête d&rsquo;adrénaline, de découvertes culturelles ou de tranquillité, la RDC a une expérience unique à vous offrir.
                     </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
