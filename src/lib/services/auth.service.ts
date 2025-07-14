@@ -32,7 +32,7 @@ export const authService = {
       },
     });
 
-    const { ...safeUser } = newUser;
+    const { password, ...safeUser } = newUser;
     return safeUser;
   },
 
@@ -44,9 +44,9 @@ export const authService = {
         email: true,
         name: true,
         role: true,
-        avatarUrl: true, // NOUVEAU
-        phone: true,     // NOUVEAU
-        bio: true,       // NOUVEAU
+        avatarUrl: true,
+        phone: true,
+        bio: true,
         password: true,
       }
     });
@@ -59,7 +59,7 @@ export const authService = {
       throw new Error('Email ou mot de passe incorrect.');
     }
 
-    const { ...safeUser } = user;
+    const { password, ...safeUser } = user;
     const token = await generateToken({ id: user.id, email: user.email, role: user.role });
 
     return { user: safeUser, token };

@@ -7,7 +7,7 @@ import { EmblaOptionsType } from 'embla-carousel';
 import Autoplay, { AutoplayType } from 'embla-carousel-autoplay'; // Importer AutoplayType
 import { ChevronLeft, ChevronRight, Info, ExternalLink } from 'lucide-react';
 
-// ... (interface Place et attractivePlaces inchangées) ...
+
 interface Place {
     id: string;
     name: string;

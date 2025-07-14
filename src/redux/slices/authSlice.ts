@@ -201,5 +201,6 @@ export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenti
 export const selectAuthLoading = (state: RootState) => state.auth.isLoading;
 export const selectAuthError = (state: RootState) => state.auth.error;
 export const selectRegistrationSuccess = (state: RootState) => state.auth.registrationSuccess;
+export const selectIsAuthInitialized = (state: RootState) => state.auth.isAuthInitialized;
 
 export default authSlice.reducer;

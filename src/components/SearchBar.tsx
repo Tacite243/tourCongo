@@ -1,196 +1,165 @@
+// src/components/SearchBar.tsx
+
 "use client";
 
 import React, { useState } from "react";
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatISO, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar as CalendarIcon, Search, Users, MapPin, Home } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { DateRange } from "react-day-picker";
+import { Calendar as CalendarIcon, Search, Users, MapPin, Minus, Plus } from "lucide-react";
 
 interface SearchBarProps {
+    // Prop pour déterminer si la barre est en mode compact (dans le header)
+    // ou en mode complet (sur la page d'accueil ou de résultats).
     inHeaderCompactMode?: boolean;
 }
 
 export function SearchBar({ inHeaderCompactMode = false }: SearchBarProps) {
     const router = useRouter();
-    // Ces états sont pour la barre de recherche principale (non compacte)
-    const [destination, setDestination] = useState<string>("");
-    const [checkInDate, setCheckInDate] = useState<Date | undefined>();
-    const [checkOutDate, setCheckOutDate] = useState<Date | undefined>();
-    const [guests, setGuests] = useState<string>("");
+    const searchParams = useSearchParams(); // Hook pour lire les paramètres de l'URL actuelle
 
-    const handleSearch = () => {
-        const queryParams = new URLSearchParams();
-        if (destination) queryParams.set("destination", destination);
-        if (checkInDate) queryParams.set("checkin", format(checkInDate, "yyyy-MM-dd"));
-        if (checkOutDate) queryParams.set("checkout", format(checkOutDate, "yyyy-MM-dd"));
-        if (guests) queryParams.set("guests", guests.toString());
+    // --- ÉTATS UNIFIÉS ---
+    // Les états sont initialisés à partir des paramètres de l'URL.
+    // Cela permet à la barre de recherche de "se souvenir" de la dernière recherche
+    // lorsque l'utilisateur navigue ou recharge la page.
 
-        if (queryParams.toString()) {
-            router.push(`/search?${queryParams.toString()}`);
-        } else {
-            // Peut-être ouvrir un modal plus détaillé ou focus le premier champ
-            const mainInput = document.getElementById("main-search-bar-input");
-            if (mainInput) mainInput.focus();
-            // alert("Veuillez entrer des critères de recherche."); // Moins idéal pour UX
+    const [destination, setDestination] = useState<string>(searchParams.get('destination') || "");
+
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
+        if (startDate && endDate) {
+            try {
+                // Tente de parser les dates depuis l'URL. Si le format est invalide, retourne undefined.
+                return { from: parseISO(startDate), to: parseISO(endDate) };
+            } catch (error) {
+                console.error("Format de date invalide dans l'URL:", error);
+                return undefined;
+            }
         }
+        return undefined;
+    });
+
+    const [guests, setGuests] = useState<number>(() => {
+        const g = parseInt(searchParams.get('guests') || '1', 10);
+        return isNaN(g) || g < 1 ? 1 : g; // Assure que le nombre est au moins 1
+    });
+
+    // --- LOGIQUE DE RECHERCHE ---
+    // Le rôle de cette fonction est de construire une nouvelle URL avec les critères de recherche
+    // et de rediriger l'utilisateur vers la page des résultats.
+    const handleSearch = () => {
+        const params = new URLSearchParams();
+
+        if (destination.trim()) {
+            params.append('destination', destination.trim());
+        }
+        if (dateRange?.from) {
+            // formatISO avec { representation: 'date' } donne "YYYY-MM-DD"
+            params.append('startDate', formatISO(dateRange.from, { representation: 'date' }));
+        }
+        if (dateRange?.to) {
+            params.append('endDate', formatISO(dateRange.to, { representation: 'date' }));
+        }
+        if (guests > 0) {
+            params.append('guests', guests.toString());
+        }
+
+        // Redirige vers la page `/listings` avec les nouveaux paramètres.
+        // C'est cette page qui déclenchera l'action Redux pour charger les données.
+        router.push(`/listings?${params.toString()}`);
     };
 
+    // --- COMPOSANT INTERNE POUR LE SÉLECTEUR DE VOYAGEURS (UX AMÉLIORÉE) ---
+    const GuestsSelector = () => (
+        <div className="w-64 p-4 space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="font-medium">Voyageurs</p>
+                    <p className="text-sm text-muted-foreground">Adultes</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setGuests(prev => Math.max(1, prev - 1))} disabled={guests <= 1}>
+                        <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-6 text-center font-semibold">{guests}</span>
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setGuests(prev => prev + 1)}>
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+            {/* Vous pourriez ajouter d'autres catégories ici : enfants, bébés, etc. */}
+        </div>
+    );
+
+    // --- MODE COMPACT (POUR LE HEADER) ---
+    // Ce mode agit comme un simple bouton qui déclenche la recherche avec les valeurs actuelles.
     if (inHeaderCompactMode) {
         return (
-            <div className="flex items-center justify-between w-full max-w-md sm:max-w-xl rounded-full border shadow-md bg-background text-foreground px-2 py-1">
-                {/* Destination */}
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <button className="flex items-center px-3 py-2 gap-1 truncate hover:bg-muted/30 rounded-full transition">
-                            <Home size={16} className="text-muted-foreground" />
-                            <span className="font-medium truncate">N’importe où</span>
-                        </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-4">
-                        <label className="text-sm font-medium mb-1 block">Destination</label>
-                        <Input
-                            placeholder="Où allez-vous ?"
-                            value={destination}
-                            onChange={(e) => setDestination(e.target.value)}
-                        />
-                    </PopoverContent>
-                </Popover>
-
-                <div className="w-px h-6 bg-border" />
-
-                {/* Dates */}
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <button className="px-3 py-2 truncate hover:bg-muted/30 rounded-full transition text-sm">
-                            {checkInDate && checkOutDate
-                                ? `${format(checkInDate, "dd MMM", { locale: fr })} - ${format(checkOutDate, "dd MMM", { locale: fr })}`
-                                : "Dates flexibles"}
-                        </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-4">
-                        <div className="grid grid-cols-1 gap-4">
-                            <div>
-                                <p className="text-sm font-medium mb-1">Date d’arrivée</p>
-                                <Calendar
-                                    mode="single"
-                                    selected={checkInDate}
-                                    onSelect={setCheckInDate}
-                                    disabled={(date) =>
-                                        date < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                                        (checkOutDate ? date >= checkOutDate : false)
-                                    }
-                                />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium mb-1">Date de départ</p>
-                                <Calendar
-                                    mode="single"
-                                    selected={checkOutDate}
-                                    onSelect={setCheckOutDate}
-                                    disabled={(date) =>
-                                        checkInDate
-                                            ? date <= checkInDate
-                                            : date < new Date(new Date().setHours(0, 0, 0, 0))
-                                    }
-                                />
-                            </div>
-                        </div>
-                    </PopoverContent>
-                </Popover>
-
-                <div className="w-px h-6 bg-border" />
-
-                {/* Voyageurs */}
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <button className="px-3 py-2 truncate hover:bg-muted/30 rounded-full transition text-sm">
-                            {guests ? `${guests} voyageurs` : "Ajouter des voyageurs"}
-                        </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64 p-4">
-                        <label htmlFor="guests" className="block text-sm font-medium mb-2">Nombre de voyageurs</label>
-                        <Input
-                            id="guests"
-                            type="number"
-                            min="1"
-                            value={guests}
-                            onChange={(e) => setGuests(e.target.value)}
-                        />
-                    </PopoverContent>
-                </Popover>
-
-                {/* Bouton recherche */}
-                <Button
-                    size="icon"
-                    className="bg-primary hover:bg-primary/90 text-white rounded-full ml-2"
-                    onClick={handleSearch}
-                >
-                    <Search size={18} />
-                </Button>
-            </div>
-        )
+            <Button
+                variant="outline"
+                onClick={handleSearch}
+                className="w-full max-w-sm md:max-w-md h-12 rounded-full shadow-md flex justify-between items-center px-4"
+            >
+                <span className="font-semibold truncate">{destination || "Rechercher une destination"}</span>
+                <div className="bg-primary text-primary-foreground p-2 rounded-full">
+                    <Search size={16} />
+                </div>
+            </Button>
+        );
     }
 
-    // Version complète (pour le corps de la page)
+    // --- MODE COMPLET (POUR LA PAGE D'ACCUEIL / RÉSULTATS) ---
     return (
-        <div className="w-full max-w-3xl mx-auto" id="main-search-bar-container">
-            <div className="flex items-center bg-background border border-border rounded-full shadow-lg p-1.5 md:p-1 space-x-0.5 md:space-x-0">
-                {/* Destination */}
-                <div className="flex-1 group px-2.5 md:px-4 py-1.5 md:py-2 hover:bg-muted/30 rounded-full cursor-pointer transition-colors relative">
-                    <label htmlFor="main-destination-input" className="block text-xs font-semibold text-foreground">
-                        Destination
-                    </label>
-                    <Input
-                        id="main-search-bar-input"
-                        type="text"
-                        placeholder="Rechercher une destination"
-                        value={destination}
-                        onChange={(e) => setDestination(e.target.value)}
-                        className="w-full h-auto p-0 text-sm border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent placeholder:text-muted-foreground"
-                    />
-                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors sm:hidden" />
+        <div className="w-full max-w-4xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center bg-background border border-border rounded-full shadow-lg p-1.5 space-y-2 md:space-y-0 md:space-x-0">
+                {/* Section Destination */}
+                <div className="w-full md:flex-1 group px-4 py-2 hover:bg-muted/30 rounded-full cursor-text transition-colors relative">
+                    <label htmlFor="destination-input" className="block text-xs font-semibold text-foreground">Destination</label>
+                    <Input id="destination-input" placeholder="Rechercher une destination" value={destination} onChange={(e) => setDestination(e.target.value)} className="w-full h-auto p-0 text-sm border-none focus-visible:ring-0 bg-transparent" />
                 </div>
-                <Separator orientation="vertical" className="h-8 md:h-10 hidden md:block" />
+                <Separator orientation="vertical" className="h-10 hidden md:block" />
 
-                {/* Arrivée */}
+                {/* Section Calendrier Unifié */}
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="ghost" className={cn("flex-1 md:w-auto justify-start text-left font-normal px-2.5 md:px-4 py-1.5 md:py-2 hover:bg-muted/30 rounded-full h-auto group", !checkInDate && "text-muted-foreground")}>
-                            <div className="flex-1"><span className="block text-xs font-semibold text-foreground">Arrivée</span><span className="text-sm">{checkInDate ? format(checkInDate, "PPP", { locale: fr }) : "Quand ?"}</span></div>
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity hidden sm:block" />
-                        </Button>
+                        <div className="w-full md:flex-auto flex hover:bg-muted/30 rounded-full cursor-pointer transition-colors">
+                            <Button variant="ghost" className="flex-1 text-left font-normal px-4 py-2 h-auto">
+                                <div><span className="block text-xs font-semibold">Arrivée</span><span className="text-sm text-muted-foreground">{dateRange?.from ? format(dateRange.from, "d MMM yyyy", { locale: fr }) : "Quand ?"}</span></div>
+                            </Button>
+                            <Separator orientation="vertical" className="h-10" />
+                            <Button variant="ghost" className="flex-1 text-left font-normal px-4 py-2 h-auto">
+                                <div><span className="block text-xs font-semibold">Départ</span><span className="text-sm text-muted-foreground">{dateRange?.to ? format(dateRange.to, "d MMM yyyy", { locale: fr }) : "Quand ?"}</span></div>
+                            </Button>
+                        </div>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={checkInDate} onSelect={setCheckInDate} initialFocus disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) || (checkOutDate ? date >= checkOutDate : false)} /></PopoverContent>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} locale={fr} disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }} />
+                    </PopoverContent>
                 </Popover>
-                <Separator orientation="vertical" className="h-8 md:h-10 hidden md:block" />
+                <Separator orientation="vertical" className="h-10 hidden md:block" />
 
-                {/* Départ */}
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="ghost" className={cn("flex-1 md:w-auto justify-start text-left font-normal px-2.5 md:px-4 py-1.5 md:py-2 hover:bg-muted/30 rounded-full h-auto group", !checkOutDate && "text-muted-foreground")}>
-                            <div className="flex-1"><span className="block text-xs font-semibold text-foreground">Départ</span><span className="text-sm">{checkOutDate ? format(checkOutDate, "PPP", { locale: fr }) : "Quand ?"}</span></div>
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity hidden sm:block" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={checkOutDate} onSelect={setCheckOutDate} initialFocus disabled={(date) => (checkInDate ? date <= checkInDate : date < new Date(new Date().setHours(0, 0, 0, 0)))} /></PopoverContent>
-                </Popover>
-                <Separator orientation="vertical" className="h-8 md:h-10 hidden md:block" />
-
-                {/* Voyageurs & Recherche combinés pour les petits écrans */}
-                <div className="flex-1 group px-2.5 md:px-4 py-1.5 md:py-2 hover:bg-muted/30 rounded-full cursor-pointer transition-colors relative flex items-center justify-between">
-                    <div className="flex-1">
-                        <label htmlFor="guests" className="block text-xs font-semibold text-foreground">Voyageurs</label>
-                        <Input id="guests" type="text" placeholder="Ajouter des..." value={guests} onChange={(e) => setGuests(e.target.value)} className="w-full h-auto p-0 text-sm border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent placeholder:text-muted-foreground" />
-                    </div>
-                    <Users className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors hidden sm:block mr-2" />
-                    <Button type="button" size="icon" onClick={handleSearch} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-9 w-9 md:h-10 md:w-10 shrink-0" aria-label="Rechercher">
-                        <Search className="h-4 w-4 md:h-5 md:w-5" />
+                {/* Section Voyageurs & Bouton Recherche */}
+                <div className="w-full md:flex-auto flex items-center justify-between group pl-4 pr-1.5 py-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <div className="flex-1 cursor-pointer hover:bg-muted/30 rounded-full p-2 -m-2">
+                                <p className="block text-xs font-semibold text-foreground">Voyageurs</p>
+                                <p className="text-sm text-muted-foreground">{guests > 0 ? (guests > 1 ? `${guests} voyageurs` : "1 voyageur") : "Ajouter"}</p>
+                            </div>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0"><GuestsSelector /></PopoverContent>
+                    </Popover>
+                    <Button type="button" size="lg" onClick={handleSearch} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 w-auto px-4 md:px-6 shrink-0 flex items-center gap-2 ml-2">
+                        <Search className="h-5 w-5" />
+                        <span className="font-bold hidden sm:inline">Rechercher</span>
                     </Button>
                 </div>
             </div>

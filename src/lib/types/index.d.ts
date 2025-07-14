@@ -1,7 +1,7 @@
 import { Role } from '@prisma/client';
 import type { JWTPayload as JoseJWTPayload } from 'jose';
 
-
+import { Listing, Photo } from '@prisma/client'
 
 export interface TokenSignPayload {
   id: string;
@@ -43,3 +43,12 @@ export interface AuthenticatedRequest extends NextRequest {
     name?: string | null; // Peut aussi être inclus ici si vous l'ajoutez au payload du token
   };
 }
+
+export type ListingSearchResult = Listing & {
+  photos: Photo[]; // Le service ne prend que la première, mais le type est un tableau
+  host: {
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+  };
+};

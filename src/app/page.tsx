@@ -26,10 +26,10 @@ export default function HomePage() {
       <BriefIntroductionSection />
       <VisitCountrySection />
       <KeyFiguresSection />
-      <AttractivePlacesCarousel />
+      {/* <AttractivePlacesCarousel /> */}
       <ExperiencesHighlightSection />
       <AboutSection />
-      <TestimonialsSection />
+      {/* <TestimonialsSection /> */}
       <ContactSection />
       <FaqAccordionSection />
       <CallToActionSection />
