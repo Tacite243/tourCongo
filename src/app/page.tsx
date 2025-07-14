@@ -1,6 +1,6 @@
 // "use client"
 
-import AttractivePlacesCarousel from "@/components/AttractivePlacesCaousel";
+import AttractivePlacesCarousel from "@/components/AttractivePlacesCarousel";
 import { BriefIntroductionSection } from "@/components/BriefIntroductionSection";
 import { CallToActionSection } from "@/components/CallToActionSection";
 import { ExperiencesHighlightSection } from "@/components/ExperiencesHighlightSection";
