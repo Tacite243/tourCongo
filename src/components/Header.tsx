@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu as MenuIcon, UserCircle, LogOut, Home, Sparkles, BellRing } from "lucide-react";
+import { Menu as MenuIcon, UserCircle, LogOut, Home, Sparkles, BellRing, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ThemeToggleButton } from "./ThemeToggleButton";
 import { useDispatch, useSelector } from 'react-redux';
@@ -37,7 +37,7 @@ import { SearchBar } from "./SearchBar";
 import { useRouter } from "next/navigation";
 import { Role } from "@prisma/client";
 import { toast } from "sonner";
-import { error } from "console";
+import { ListingForm } from "./ListingForm";
 
 
 // Définition du type pour les éléments de navigation
@@ -68,6 +68,8 @@ export function SiteHeader() {
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [showSearchInHeader, setShowSearchInHeader] = useState(false);
 
+  const [isListingFormOpen, setIsListingFormOpen] = useState(false);
+
   const actualNavLinks: NavItemConfig[] = [
     { href: "/tourisme", label: "Tourisme", icon: Home, isNew: false },
     { href: "/restaurant", label: "Restaurant & Services", icon: Sparkles, isNew: true },
@@ -95,7 +97,7 @@ export function SiteHeader() {
         return error || 'une erreur est survenue.'
       }
     })
-  }
+  };
 
   // Fermer les popups si l'utilisateur est authentifié (par exemple, après une connexion réussie)
   useEffect(() => {
@@ -173,8 +175,8 @@ export function SiteHeader() {
       return (
         <Button
           variant="ghost"
-          onClick={() => router.push('/dashboard/listings/new')} // Redirige vers la page de création d'annonce
-          className="hidden sm:inline-flex text-sm font-medium rounded-full px-4 py-2 hover:bg-accent focus:bg-accent text-foreground"
+          onClick={() => setIsListingFormOpen(true)}
+          className="hidden sm:inline-flex ..."
         >
           Ajouter un logement
         </Button>
@@ -197,9 +199,11 @@ export function SiteHeader() {
   const HostMenuItem = () => {
     if (isAuthenticated && (currentUser?.role === Role.ADMIN || currentUser?.role === Role.SUPER_ADMIN)) {
       return (
-        <DropdownMenuItem onSelect={() => router.push('/dashboard/listings')}>
-          <Home className="mr-2 h-4 w-4" />
-          Mode Hôte
+        <DropdownMenuItem
+          onSelect={() => setIsListingFormOpen(true)}
+        >
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Créer une annonce
         </DropdownMenuItem>
       );
     }
@@ -405,6 +409,19 @@ export function SiteHeader() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-8 pt-20 md:pt-24" id="main-search-bar-anchor"> {/* Ajout de padding-top */}
         <SearchBar />
       </div>
+
+      {/* DIALOG POUR LE FORMULAIRE DE LOGEMENT */}
+      <Dialog open={isListingFormOpen} onOpenChange={setIsListingFormOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>Ajouter un nouveau logement</DialogTitle>
+            <DialogDescription>
+              Remplissez les informations ci-dessous pour publier votre annonce.
+            </DialogDescription>
+          </DialogHeader>
+          <ListingForm onSuccess={() => setIsListingFormOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -1,7 +1,9 @@
 import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { Listing, Prisma } from '@prisma/client';
+import { CreateListingInput } from '../utils/validation.schemas';
 
-// Définir le type pour les paramètres de recherche
+
+// Type pour les paramètres de recherche
 export interface SearchListingsParams {
     destination?: string;
     startDate?: Date;
@@ -72,4 +74,17 @@ export const listingService = {
 
         return listings;
     },
+    async create(data: CreateListingInput, hostId: string): Promise<Listing> {
+        const newListing = await prisma.listing.create({
+            data: {
+                ...data,
+                latitude: 0,
+                longitude: 0,
+                host: {
+                    connect: { id: hostId } // Lier le logement à l'hôte connecté
+                }
+            }
+        });
+        return newListing;
+    }
 };

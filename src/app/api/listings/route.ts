@@ -1,6 +1,35 @@
 import { NextResponse } from 'next/server';
 import { listingService, SearchListingsParams } from '@/lib/services/listing.service';
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
+import { headers } from 'next/headers';
+import { createListingSchema } from '@/lib/utils/validation.schemas';
+
+
+export async function POST(request: Request) {
+    try {
+        const headersList = headers();
+        const hostId = (await headersList).get('x-user-id')
+        const userRole = (await headersList).get('x-user-role');
+
+        // Sécurité : Vérifier que l'utilisateur est bien un hôte ou admin
+        if (!hostId || (userRole !== 'HOST' && userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN')) {
+            return NextResponse.json({ message: 'Non autorisé : Vous devez être un hôte pour créer une annonce.' }, { status: 403 });
+        }
+
+        const body = await request.json();
+        const validatedData = createListingSchema.parse(body);
+        const newListing = await listingService.create(validatedData, hostId);
+
+        return NextResponse.json(newListing, { status: 201 });
+    } catch (error) {
+        if (error instanceof ZodError) {
+            return NextResponse.json({ message: 'Données invalides', errors: error.flatten() }, { status: 400 });
+        }
+        console.error('[LISTING_CREATE_ERROR]', error);
+        return NextResponse.json({ message: 'Erreur interne du serveur' }, { status: 500 });
+    }
+};
+
 
 // Schéma de validation pour les paramètres de la query
 const searchSchema = z.object({
@@ -50,3 +79,5 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Erreur interne du serveur' }, { status: 500 });
     }
 }
+
+
