@@ -20,6 +20,7 @@ import {
   selectCurrentUser,
   selectIsAuthenticated,
   logoutUser,
+  becomeHost
 } from '@/redux/slices/authSlice';
 import {
   Dialog,
@@ -34,6 +35,10 @@ import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "./SearchBar";
 import { useRouter } from "next/navigation";
+import { Role } from "@prisma/client";
+import { toast } from "sonner";
+import { error } from "console";
+
 
 // Définition du type pour les éléments de navigation
 interface NavItemConfig {
@@ -74,6 +79,23 @@ export function SiteHeader() {
     // Rediriger vers la page d'accueil ou autre après déconnexion
     router.push('/');
   };
+
+  const handleBecomeHost = () => {
+    if (!isAuthenticated) {
+      setIsLoginOpen(true);
+      return;
+    }
+    toast.promise(dispatch(becomeHost()).unwrap(), {
+      loading: 'Mise à jour de votre statut...',
+      success: (updatedUser) => {
+        return `Félicitations, ${updatedUser.name} ! Vous êtes maintenant un hôte.`;
+      },
+      error: (error) => {
+        // `error` est la valeur de rejectWithValue
+        return error || 'une erreur est survenue.'
+      }
+    })
+  }
 
   // Fermer les popups si l'utilisateur est authentifié (par exemple, après une connexion réussie)
   useEffect(() => {
@@ -144,6 +166,60 @@ export function SiteHeader() {
     }
   };
 
+  // --- COMPOSANT INTERNE POUR LE BOUTON D'ACTION HÔTE ---
+  const HostActionButton = () => {
+    // Si l'utilisateur est un ADMIN ou SUPER_ADMIN, il est déjà un hôte.
+    if (isAuthenticated && (currentUser?.role === Role.ADMIN || currentUser?.role === Role.SUPER_ADMIN || currentUser?.role === Role.HOST)) {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => router.push('/dashboard/listings/new')} // Redirige vers la page de création d'annonce
+          className="hidden sm:inline-flex text-sm font-medium rounded-full px-4 py-2 hover:bg-accent focus:bg-accent text-foreground"
+        >
+          Ajouter un logement
+        </Button>
+      );
+    }
+
+    // Sinon (non connecté ou simple USER), il voit "Devenir hôte".
+    return (
+      <Button
+        variant="ghost"
+        onClick={handleBecomeHost}
+        className="hidden sm:inline-flex text-sm font-medium rounded-full px-4 py-2 hover:bg-accent focus:bg-accent text-foreground"
+      >
+        Devenir hôte
+      </Button>
+    );
+  };
+
+  // --- COMPOSANT INTERNE POUR L'ITEM DE MENU HÔTE ---
+  const HostMenuItem = () => {
+    if (isAuthenticated && (currentUser?.role === Role.ADMIN || currentUser?.role === Role.SUPER_ADMIN)) {
+      return (
+        <DropdownMenuItem onSelect={() => router.push('/dashboard/listings')}>
+          <Home className="mr-2 h-4 w-4" />
+          Mode Hôte
+        </DropdownMenuItem>
+      );
+    }
+
+    // Si simple USER
+    if (isAuthenticated && currentUser?.role === Role.USER) {
+      return (
+        <DropdownMenuItem onSelect={handleBecomeHost}>
+          Devenir hôte
+        </DropdownMenuItem>
+      );
+    }
+
+    // Si non connecté
+    return (
+      <DropdownMenuItem onSelect={handleBecomeHost}>
+        Devenir hôte
+      </DropdownMenuItem>
+    );
+  };
 
   return (
     <>
@@ -217,15 +293,7 @@ export function SiteHeader() {
 
           {/* Section Droite: Actions utilisateur */}
           <div className="flex items-center justify-end space-x-2 sm:space-x-4">
-            <Button
-              variant="ghost" // S'adapte au thème
-              className={cn(
-                "hidden sm:inline-flex text-sm font-medium rounded-full px-4 py-2",
-                "hover:bg-accent focus:bg-accent text-foreground" // S'assurer que text-foreground est là pour la couleur de base
-              )}
-            >
-              Devenir hôte
-            </Button>
+            <HostActionButton />
             <ThemeToggleButton />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -266,6 +334,8 @@ export function SiteHeader() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => alert('Profil')}>Profil</DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => alert('Voyages')}>Mes voyages</DropdownMenuItem>
+                    {/* Utiliser notre item de menu conditionnel */}
+                    <HostMenuItem />
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onSelect={handleLogout}
@@ -275,6 +345,7 @@ export function SiteHeader() {
                     </DropdownMenuItem>
                   </>
                 ) : (
+                  // --- MENU UTILISATEUR DÉCONNECTÉ ---
                   <>
                     <DropdownMenuItem
                       onSelect={
@@ -298,7 +369,8 @@ export function SiteHeader() {
                       Connexion
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Devenir hôte</DropdownMenuItem>
+                    {/* Le bouton est aussi ici */}
+                    <HostMenuItem />
                     <DropdownMenuItem>Aide</DropdownMenuItem>
                   </>
                 )}

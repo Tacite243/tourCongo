@@ -14,6 +14,7 @@ enum Role {
   USER         // Utilisateur classique
   ADMIN        // Administrateur de la plateforme
   SUPER_ADMIN  // Accès total (niveau système)
+  HOST         // Nouvel ajout : utilisateur hôte
 }
 
 // 👤 Utilisateur de la plateforme (peut être hôte ou voyageur)

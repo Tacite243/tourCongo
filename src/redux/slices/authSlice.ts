@@ -110,6 +110,30 @@ export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
   }
 );
 
+// --- Thunk pour devenir Hôte ---
+export const becomeHost = createAsyncThunk<
+  UserAuthInfo, // L'API renvoie l'utilisateur mis à jour
+  void, // Pas d'arguments nécessaires
+  { rejectValue: string }
+>(
+  'auth/becomeHost',
+  async (_, thunkAPI) => {
+    try {
+      const response = await axios.post('/api/user/become-host');
+      // Le payload de succès contiendra l'utilisateur mis à jour
+      return response.data.user as UserAuthInfo;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<{ message?: string }>;
+        const message = axiosError.response?.data?.message || axiosError.message || 'Echec de la mise à niveau.';
+        return thunkAPI.rejectWithValue(message);
+      }
+      return thunkAPI.rejectWithValue((error as Error).message || 'Une erreur inconnue est survenue');
+    }
+  }
+)
+
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -160,7 +184,6 @@ const authSlice = createSlice({
         state.error = action.payload;
         state.registrationSuccess = false;
       })
-
       .addCase(fetchCurrentUser.pending, (state) => {
         state.isLoading = true;
       })
@@ -190,6 +213,21 @@ const authSlice = createSlice({
       .addCase(logoutUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+      .addCase(becomeHost.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(becomeHost.fulfilled, (state, action: PayloadAction<UserAuthInfo>) => {
+        state.isLoading = false;
+        // Mettre à jour l'utilisateur actuel avec les nouvelles informations (nouveau rôle)
+        state.user = action.payload;
+        // On pourrait aussi afficher un message de succès
+      })
+      .addCase(becomeHost.rejected, (state, action) => {
+        state.isLoading = false;
+        // Afficher l'erreur (ex: "Vous êtes déjà un hôte")
+        state.error = action.payload as string;
       });
   },
 });

@@ -8,6 +8,8 @@ import { SiteHeader } from "@/components/Header";
 import { AuthInitializer } from "@/components/AuthInitializer";
 import { AOSInitializer } from "@/components/AOSInitializer";
 import { Footer } from "@/components/Footer";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+
 
 // Polices avec les variables utilisées dans <body>
 const inter = Inter({ subsets: ["latin"] });
@@ -44,6 +46,7 @@ export default function RootLayout({
             </AuthInitializer>
           </ThemeProvider>
         </ReduxProvider>
+        <SonnerToaster richColors position="top-right" />
       </body>
     </html>
   );
