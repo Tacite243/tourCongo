@@ -29,7 +29,7 @@ export default function HomePage() {
       <AttractivePlacesCarousel />
       <ExperiencesHighlightSection />
       <AboutSection />
-      {/* <TestimonialsSection /> */}
+      <TestimonialsSection />
       <ContactSection />
       <FaqAccordionSection />
       <CallToActionSection />
