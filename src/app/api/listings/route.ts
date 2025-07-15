@@ -3,13 +3,14 @@ import { listingService, SearchListingsParams } from '@/lib/services/listing.ser
 import { z, ZodError } from 'zod';
 import { headers } from 'next/headers';
 import { createListingSchema } from '@/lib/utils/validation.schemas';
+import { Role } from '@prisma/client';
 
 
 export async function POST(request: Request) {
     try {
         const headersList = headers();
         const hostId = (await headersList).get('x-user-id')
-        const userRole = (await headersList).get('x-user-role');
+        const userRole = (await headersList).get('x-user-role') as Role;
 
         // Sécurité : Vérifier que l'utilisateur est bien un hôte ou admin
         if (!hostId || (userRole !== 'HOST' && userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN')) {
@@ -24,9 +25,11 @@ export async function POST(request: Request) {
     } catch (error) {
         if (error instanceof ZodError) {
             return NextResponse.json({ message: 'Données invalides', errors: error.flatten() }, { status: 400 });
-        }
+        };
+        // Logguer l'erreur côté serveur pour le débogage
         console.error('[LISTING_CREATE_ERROR]', error);
-        return NextResponse.json({ message: 'Erreur interne du serveur' }, { status: 500 });
+        // Renvoyer une réponse d'erreur générique au client
+        return NextResponse.json({ message: 'Une erreur interne est survenue. Veuillez réessayer.' }, { status: 500 });
     }
 };
 

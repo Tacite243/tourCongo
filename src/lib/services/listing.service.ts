@@ -76,17 +76,34 @@ export const listingService = {
     },
     async create(data: CreateListingInput, hostId: string): Promise<Listing> {
         const { imageUrls, ...listingData } = data;
-        const newListing = await prisma.listing.create({
-            data: {
-                ...listingData,
-                host: {
-                    connect: { id: hostId } // Lier le logement à l'hôte connecté
+        const newListing = await prisma.$transaction(async (tx) => {
+            // Etape 1 : créer le logement
+            const createdListing = await tx.listing.create({
+                data: {
+                    ...listingData,
+                    host: {
+                        connect: { id: hostId }
+                    },
                 },
-                photos: {
-                    create: imageUrls.map(url => ({ url })),
-                },
-            },
+            });
+            // Étape 2 : Préparer les données pour les photos
+            if (!imageUrls || imageUrls.length === 0) {
+                // Cette validation est déjà dans Zod, mais c'est une sécurité supplémentaire.
+                throw new Error("Au moins une image est requise");
+            }
+            const photoData = imageUrls.map(url => ({
+                url,
+                listingId: createdListing.id,
+            }));
+            // Étape 3 : Créer les enregistrements de photos
+            await tx.photo.createMany({
+                data: photoData,
+            });
+            // Retourner le logement créé pour confirmation
+            return createdListing;
         });
+        // Après la transaction, on peut récupérer le logement complet avec ses relations
+        // si nécessaire, mais pour la réponse de l'API, `newListing` est suffisant.
         return newListing;
     }
 };
