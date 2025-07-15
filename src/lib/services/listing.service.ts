@@ -75,15 +75,17 @@ export const listingService = {
         return listings;
     },
     async create(data: CreateListingInput, hostId: string): Promise<Listing> {
+        const { imageUrls, ...listingData } = data;
         const newListing = await prisma.listing.create({
             data: {
-                ...data,
-                latitude: 0,
-                longitude: 0,
+                ...listingData,
                 host: {
                     connect: { id: hostId } // Lier le logement à l'hôte connecté
-                }
-            }
+                },
+                photos: {
+                    create: imageUrls.map(url => ({ url })),
+                },
+            },
         });
         return newListing;
     }
