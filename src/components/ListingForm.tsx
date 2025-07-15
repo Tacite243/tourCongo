@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUploader } from './ImageUploader';
+import { selectIsUploading } from '@/redux/slices/uploadSlice';
 
 const amenitiesList = ["Wifi", "Télévision", "Cuisine", "Climatisation", "Piscine", "Parking gratuit", "Salle de sport", "Jacuzzi"];
 
@@ -26,7 +27,7 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
     const isCreating = useSelector(selectIsCreatingListing);
-    const [isUploading, setIsUploading] = useState(false);
+    const isUploading = useSelector(selectIsUploading);
 
     const form = useForm<CreateListingInput>({
         resolver: zodResolver(createListingSchema),
@@ -96,10 +97,7 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
                         <FormItem>
                             <FormLabel>Photos du logement</FormLabel>
                             <FormControl>
-                                <ImageUploader
-                                    onUploadSuccess={handleUploadSuccess}
-                                    onUploadingChange={setIsUploading}
-                                />
+                                <ImageUploader onUploadSuccess={handleUploadSuccess} />
                             </FormControl>
                             <FormDescription>
                                 Ajoutez au moins une photo de haute qualité.
