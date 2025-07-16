@@ -3,70 +3,111 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
-import { selectCurrentUser } from '@/redux/slices/authSlice';
+import { fetchHostListings, selectHostings, selectListingsLoading } from '@/redux/slices/listingSlice';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ListingForm } from '@/components/ListingForm';
+import { HostListingCard } from '@/components/HostListingCard';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
-// Vous créerez un service et un slice pour récupérer les annonces de l'hôte
-// Pour l'instant, on met un placeholder
-type HostListing = { id: string; title: string; city: string; price: number; };
-
-export default function HostDashboardPage() {
-    const router = useRouter();
-    const currentUser = useSelector((state: RootState) => state.auth.user);
+function HostDashboardContent() {
+    const dispatch = useDispatch<AppDispatch>();
+    const myListings = useSelector(selectHostings);
+    const isLoading = useSelector(selectListingsLoading);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [myListings, setMyListings] = useState<HostListing[]>([]); // État pour stocker les annonces
 
+    // Charger les annonces au montage du composant
     useEffect(() => {
-        // Rediriger si l'utilisateur n'est pas un HOTE ou n'est pas connecté
-        if (!currentUser || currentUser.role !== 'HOST') {
-            // Optionnellement, vous pouvez montrer une page "Devenez hôte"
-            // Pour l'instant, on redirige vers l'accueil
-            router.push('/');
-        } else {
-            // Logique pour récupérer les annonces de l'hôte
-            // fetchMyListings(); 
-        }
-    }, [currentUser, router]);
+        dispatch(fetchHostListings());
+    }, [dispatch]);
 
-    if (!currentUser) {
-        return <div>Chargement...</div>; // Ou un squelette
-    }
+    const renderContent = () => {
+        if (isLoading && myListings.length === 0) {
+            return (
+                <div className="space-y-4">
+                    <Skeleton className="h-28 w-full" />
+                    <Skeleton className="h-28 w-full" />
+                    <Skeleton className="h-28 w-full" />
+                </div>
+            );
+        }
+
+        if (myListings.length > 0) {
+            return (
+                <div className="space-y-4">
+                    {myListings.map(listing => (
+                        <HostListingCard key={listing.id} listing={listing} />
+                    ))}
+                </div>
+            );
+        }
+
+        return (
+            <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">Vous n'avez aucune annonce.</p>
+                <Button variant="link" onClick={() => setIsCreateModalOpen(true)} className="mt-2">Créez votre première annonce</Button>
+            </div>
+        );
+    };
 
     return (
         <div className="container mx-auto py-8">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Tableau de bord Hôte</h1>
                 <Button onClick={() => setIsCreateModalOpen(true)}>Créer une nouvelle annonce</Button>
             </div>
 
             <div className="p-4 border rounded-lg">
                 <h2 className="text-xl font-semibold mb-4">Mes Annonces</h2>
-                {myListings.length > 0 ? (
-                    <div className="space-y-4">
-                        {/* {myListings.map(listing => <ListingManagementCard key={listing.id} listing={listing} />)} */}
-                        <p>Liste de vos annonces ici...</p>
-                    </div>
-                ) : (
-                    <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">Vous n'avez aucune annonce.</p>
-                        <Button variant="link" onClick={() => setIsCreateModalOpen(true)} className="mt-2">Créez votre première annonce</Button>
-                    </div>
-                )}
+                {renderContent()}
             </div>
 
-            {/* Modal pour le formulaire de création */}
             <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                 <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>Créer une nouvelle annonce</DialogTitle>
+                        <DialogDescription>Remplissez les informations pour publier.</DialogDescription>
                     </DialogHeader>
-                    {/* Le formulaire gère sa propre soumission et fermera le modal via onSuccess */}
                     <ListingForm onSuccess={() => setIsCreateModalOpen(false)} />
                 </DialogContent>
             </Dialog>
+        </div>
+    );
+}
+
+export default function HostDashboardPage() {
+    const router = useRouter();
+    const currentUser = useSelector((state: RootState) => state.auth.user);
+    const isAuthInitialized = useSelector((state: RootState) => state.auth.isAuthInitialized);
+
+    useEffect(() => {
+        // Attendre que l'authentification soit initialisée avant de prendre une décision
+        if (!isAuthInitialized) return;
+
+        if (!currentUser || currentUser.role !== 'HOST') {
+            toast.error("Accès non autorisé. Devenez hôte pour accéder à cette page.");
+            router.push('/');
+        }
+    }, [currentUser, isAuthInitialized, router]);
+
+    // Afficher un loader pendant que l'on vérifie l'authentification
+    if (!isAuthInitialized) {
+        return <div>Vérification de la session...</div>;
+    }
+
+    // Si après vérification, l'utilisateur n'est pas un hôte, on n'affiche rien
+    if (!currentUser || currentUser.role !== 'HOST') {
+        return null;
+    }
+
+    // Si tout est bon, on affiche le dashboard
+    return (
+        <div className="flex flex-col min-h-screen">
+            <main className="flex-grow pt-20">
+                <HostDashboardContent />
+            </main>
         </div>
     );
 }

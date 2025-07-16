@@ -6,7 +6,7 @@ import { verifyToken } from '@/lib/utils/auth.utils';
 import { JwtPayload } from '@/lib/types';
 import { Role } from '@prisma/client';
 
-const protectedRoutes = ['/api/auth/me', '/api/admin', '/api/listings', '/api/user/become-host'];
+const protectedRoutes = ['/api/auth/me', '/api/admin', '/api/listings', '/api/user/become-host', '/api/host/listings'];
 const adminRoutes = ['/api/admin'];
 const superAdminRoutes = ['/api/superadmin'];
 

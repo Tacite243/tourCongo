@@ -105,5 +105,30 @@ export const listingService = {
         // Après la transaction, on peut récupérer le logement complet avec ses relations
         // si nécessaire, mais pour la réponse de l'API, `newListing` est suffisant.
         return newListing;
-    }
+    },
+    async findByHostId(hostId: string) {
+        const listings = await prisma.listing.findMany({
+            where: {
+                hostId: hostId,
+            },
+            include: {
+                // Inclure la première photo pour l'afficher dans le dashboard
+                photos: {
+                    take: 1,
+                },
+                // On pourrait aussi inclure les statistiques de réservation ici si nécessaire
+                _count: {
+                    select: {
+                        bookings: true, // Compter le nombre de réservations
+                        reviews: true,  // Compter le nombre d'avis
+                        likes: true,
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+        return listings;
+    },
 };

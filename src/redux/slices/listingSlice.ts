@@ -3,22 +3,33 @@ import { RootState } from '../store';
 import { ListingSearchResult } from '@/lib/types'; // Notre nouveau type
 import { SearchListingsParams } from '@/lib/services/listing.service'; // Le type des paramètres de recherche
 import { CreateListingInput } from '@/lib/utils/validation.schemas';
-import { Listing } from '@prisma/client';
+import { Listing, Photo } from '@prisma/client';
 import axios from 'axios';
 
 
 // Définir l'état pour ce slice
 interface ListingsState {
-    listings: ListingSearchResult[];
+    listings: ListingSearchResult[]; // Pour les résultats de recherche
+    hostListings: HostListingResult[]; // Pour les annonces de l'hôte
     isLoading: boolean;
     error: string | null;
     isCreating: boolean;
     createError: string | null;
 }
 
+// Le type retourné par notre nouveau service
+export type HostListingResult = Listing & {
+    photos: Photo[];
+    _count: {
+        bookings: number;
+        reviews: number;
+        likes: number;
+    }
+}
 
 const initialState: ListingsState = {
     listings: [],
+    hostListings: [],
     isLoading: false,
     error: null,
     isCreating: false,
@@ -78,6 +89,24 @@ export const searchListings = createAsyncThunk<
     }
 );
 
+export const fetchHostListings = createAsyncThunk<
+    HostListingResult[],
+    void, // Pas d'argument nécessaire, l'ID vient de la session
+    { rejectValue: string }
+>(
+    'listings/fetchHostListings',
+    async (_, thunkAPI) => {
+        try {
+            const response = await axios.get('/api/host/listings');
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                return thunkAPI.rejectWithValue(error.response?.data.message || 'Échec de la récupération des annonces');
+            }
+            return thunkAPI.rejectWithValue('Une erreur inconnue est survenue');
+        }
+    }
+);
 
 const listingSlice = createSlice({
     name: 'listings',
@@ -116,10 +145,24 @@ const listingSlice = createSlice({
                 state.isCreating = false;
                 // Optionnel : ajouter le nouveau logement à la liste existante si pertinent
                 // state.listings.unshift(action.payload);
+                // Ajoute la nouvelle annonce au début de la liste du dashboard de l'hôte
+                state.hostListings.unshift(action.payload as HostListingResult);
             })
             .addCase(createListing.rejected, (state, action) => {
                 state.isCreating = false;
                 state.createError = action.payload?.message || 'Erreur inconnue';
+            })
+            .addCase(fetchHostListings.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(fetchHostListings.fulfilled, (state, action: PayloadAction<HostListingResult[]>) => {
+                state.isLoading = false;
+                state.hostListings = action.payload;
+            })
+            .addCase(fetchHostListings.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload as string;
             });
     },
 });
@@ -132,5 +175,6 @@ export const selectListingsLoading = (state: RootState) => state.listings.isLoad
 export const selectListingsError = (state: RootState) => state.listings.error;
 export const selectIsCreatingListing = (state: RootState) => state.listings.isCreating;
 export const selectCreateListingError = (state: RootState) => state.listings.createError;
+export const selectHostings = (state: RootState) => state.listings.hostListings;
 
 export default listingSlice.reducer;
