@@ -112,7 +112,7 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
                 <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Titre</FormLabel><FormControl><Input placeholder="Villa moderne avec vue" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Décrivez votre logement..." {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="type" render={({ field }) => (
-                    <FormItem><FormLabel>Type de logement</FormLabel>
+                    <FormItem><FormLabel>type</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Sélectionnez un type" /></SelectTrigger></FormControl>
                             <SelectContent>

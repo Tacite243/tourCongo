@@ -17,7 +17,7 @@ export const createListingSchema = z.object({
     title: z.string().min(5, "Le titre doit faire au moins 5 caractères."),
     description: z.string().min(20, "La description doit faire au moins 20 caractères."),
     // Valider par rapport aux valeurs de l'enum Prisma
-    type: z.nativeEnum(ListingType, { errorMap: () => ({ message: "Type de logement invalide." }) }),
+    type: z.nativeEnum(ListingType, { errorMap: () => ({ message: "type invalide." }) }),
     price: z.coerce.number().positive("Le prix doit être un nombre positif."),
     address: z.string().min(10, "L'adresse doit être plus précise."),
     city: z.string().min(2, "La ville est requise."),

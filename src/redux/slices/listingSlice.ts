@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { ListingSearchResult } from '@/lib/types'; // Notre nouveau type
+import { ListingSearchResult } from '@/lib/types';
 import { SearchListingsParams } from '@/lib/services/listing.service'; // Le type des paramètres de recherche
 import { CreateListingInput } from '@/lib/utils/validation.schemas';
 import { Listing, Photo } from '@prisma/client';

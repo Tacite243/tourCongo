@@ -178,7 +178,7 @@ export function SiteHeader() {
           onClick={() => setIsListingFormOpen(true)}
           className="hidden sm:inline-flex ..."
         >
-          Ajouter un logement
+          Publier une annonce
         </Button>
       );
     }
@@ -414,7 +414,7 @@ export function SiteHeader() {
       <Dialog open={isListingFormOpen} onOpenChange={setIsListingFormOpen}>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
-            <DialogTitle>Ajouter un nouveau logement</DialogTitle>
+            <DialogTitle>Publier une nouvelle annonce</DialogTitle>
             <DialogDescription>
               Remplissez les informations ci-dessous pour publier votre annonce.
             </DialogDescription>
