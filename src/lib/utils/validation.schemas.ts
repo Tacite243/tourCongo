@@ -30,7 +30,7 @@ export const createListingSchema = z.object({
     bedrooms: z.coerce.number().int().min(0, "Le nombre de chambres ne peut être négatif."),
     bathrooms: z.coerce.number().int().min(0, "Le nombre de salles de bain ne peut être négatif."),
     // Les URLs des images viendront du state, pas directement du formulaire
-    imageUrls: z.array(z.string().url("URL d'image invalide")).min(1, "Veuillez ajouter au moins une image."),
+    imageUrls: z.array(z.string().url()).optional(),
 });
 
 export type CreateListingInput = z.infer<typeof createListingSchema>;

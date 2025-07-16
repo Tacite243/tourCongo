@@ -12,6 +12,11 @@ export async function POST(request: Request) {
         const hostId = (await headersList).get('x-user-id')
         const userRole = (await headersList).get('x-user-role') as Role;
 
+        console.log(`[API Listings] Received headers:`, {
+            hostId,
+            userRole
+        });
+
         // Sécurité : Vérifier que l'utilisateur est bien un hôte ou admin
         if (!hostId || (userRole !== 'HOST' && userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN')) {
             return NextResponse.json({ message: 'Non autorisé : Vous devez être un hôte pour créer une annonce.' }, { status: 403 });

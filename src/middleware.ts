@@ -48,7 +48,8 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set('x-user-id', userPayload.id);
     // Optionnel: vous pouvez toujours passer le rôle si certaines routes en ont besoin directement
     // sans refaire une requête DB, mais pour /me, l'ID suffit.
-    // requestHeaders.set('x-user-role', userPayload.role);
+    requestHeaders.set('x-user-role', userPayload.role);
+    requestHeaders.set('x-user-email', userPayload.email);
 
     return NextResponse.next({
       request: {

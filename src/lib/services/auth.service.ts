@@ -84,36 +84,31 @@ export const authService = {
         return user as UserAuthInfo;
     },
 
-    async upgradeToHost(userId: string): Promise<UserAuthInfo> {
-        // 1. Vérifier que l'utilisateur existe et est un simple USER
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-        });
-
+    async upgradeToHost(userId: string): Promise<{ user: SafeUser; token: string }> {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) {
-            throw new Error('Utilisateur non trouvé');
-        };
-
+            throw new Error("Utilisateur non trouvé.");
+        }
         if (user.role !== Role.USER) {
-            // Un admin ou un super_admin ne peut pas refaire cette action
-            throw new Error("L\' utilisateur a déjà un role élevé.");
-        };
+            throw new Error("L'utilisateur a déjà un rôle élevé.");
+        }
 
+        // Mettre à jour le rôle de l'utilisateur dans la base de données
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: {
-                role: Role.HOST
-            },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                avatarUrl: true,
-                phone: true,
-                bio: true,
-            }
+            data: { role: Role.HOST },
         });
-        return updatedUser as UserAuthInfo;
-    }
+
+        // Générer un NOUVEAU token avec le rôle mis à jour
+        const newToken = await generateToken({
+            id: updatedUser.id,
+            email: updatedUser.email,
+            role: updatedUser.role, // Le nouveau rôle 'HOST'
+        });
+
+        // Omettre le mot de passe avant de renvoyer
+        const { password, ...safeUser } = updatedUser;
+
+        return { user: safeUser, token: newToken };
+    },
 };
