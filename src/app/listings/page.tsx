@@ -12,10 +12,7 @@ import {
 } from '@/redux/slices/listingSlice';
 
 // Importer vos composants d'UI
-import { SearchBar } from '@/components/SearchBar';
 import { ListingCard, ListingCardSkeleton } from '@/components/ListingCard';
-import { SiteHeader } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 
 // Un composant interne pour gérer la logique, afin d'utiliser Suspense
 function ListingsContent() {
@@ -98,20 +95,12 @@ function ListingsContent() {
 export default function ListingsPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <SiteHeader />
       <main className="flex-grow">
-        {/* La barre de recherche est ici pour permettre à l'utilisateur d'affiner sa recherche */}
-        <div className="sticky top-16 z-40 bg-background py-4 border-b">
-           <div className="container mx-auto">
-             <SearchBar inHeaderCompactMode={false} />
-           </div>
-        </div>
         
         <Suspense fallback={<p>Chargement de la recherche...</p>}>
           <ListingsContent />
         </Suspense>
       </main>
-      <Footer />
     </div>
   );
 }

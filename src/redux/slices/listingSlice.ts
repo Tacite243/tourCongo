@@ -7,11 +7,19 @@ import { Listing, Photo } from '@prisma/client';
 import axios from 'axios';
 
 
+
+// Le type pour un logement récent (peut être plus simple que pour une recherche)
+export type RecentListingResult = Listing & {
+    photos: Photo[];
+};
+
 // Définir l'état pour ce slice
 interface ListingsState {
     listings: ListingSearchResult[]; // Pour les résultats de recherche
     hostListings: HostListingResult[]; // Pour les annonces de l'hôte
+    recentListings: RecentListingResult[]; // Champ pour la page d'accueil
     isLoading: boolean;
+    isRecentLoading: boolean; // Etat de chargement spécifique pour les récents
     error: string | null;
     isCreating: boolean;
     createError: string | null;
@@ -30,7 +38,9 @@ export type HostListingResult = Listing & {
 const initialState: ListingsState = {
     listings: [],
     hostListings: [],
+    recentListings: [],
     isLoading: false,
+    isRecentLoading: true, // Commence à true pour afficher les skeletons au premier chargement
     error: null,
     isCreating: false,
     createError: null,
@@ -108,6 +118,24 @@ export const fetchHostListings = createAsyncThunk<
     }
 );
 
+export const fetchRecentListings = createAsyncThunk<
+    RecentListingResult[],
+    void, // Pas d'argument nécessaire
+    { rejectValue: string }
+>(
+    'listings/fetchRecent',
+    async (_, thunkAPI) => {
+        try {
+            const response = await axios.get('/api/listings/recent');
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                return thunkAPI.rejectWithValue('Une erreur inconnue est survenue');
+            };
+        }
+    }
+)
+
 const listingSlice = createSlice({
     name: 'listings',
     initialState,
@@ -163,7 +191,18 @@ const listingSlice = createSlice({
             .addCase(fetchHostListings.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload as string;
-            });
+            })
+            .addCase(fetchRecentListings.pending, (state) => {
+                state.isRecentLoading = true;
+            })
+            .addCase(fetchRecentListings.fulfilled, (state, action: PayloadAction<RecentListingResult[]>) => {
+                state.isRecentLoading = false;
+                state.recentListings = action.payload;
+            })
+            .addCase(fetchRecentListings.rejected, (state, action) => {
+                state.isRecentLoading = false;
+                state.error = action.payload as string;
+            })
     },
 });
 
@@ -176,5 +215,8 @@ export const selectListingsError = (state: RootState) => state.listings.error;
 export const selectIsCreatingListing = (state: RootState) => state.listings.isCreating;
 export const selectCreateListingError = (state: RootState) => state.listings.createError;
 export const selectHostings = (state: RootState) => state.listings.hostListings;
+export const selectRecentListings = (state: RootState) => state.listings.recentListings;
+export const selectIsRecentLoading = (state: RootState) => state.listings.isRecentLoading;
+
 
 export default listingSlice.reducer;

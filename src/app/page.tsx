@@ -11,6 +11,7 @@ import { TestimonialsSection } from "@/components/TestimonialsSection";
 import VisitCountrySection from "@/components/visitContry";
 import { AboutSection } from "@/components/AboutSection";
 import { ContactSection } from "@/components/ContactSection";
+import { RecentListingsSection } from "@/components/RecentListingsSection";
 
 export default function HomePage() {
   return (
@@ -24,6 +25,7 @@ export default function HomePage() {
         showPlayButton={true}
       />
       <BriefIntroductionSection />
+      <RecentListingsSection />
       <VisitCountrySection />
       <KeyFiguresSection />
       <AttractivePlacesCarousel />

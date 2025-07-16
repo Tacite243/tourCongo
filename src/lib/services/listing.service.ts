@@ -131,4 +131,20 @@ export const listingService = {
         });
         return listings;
     },
+    async findRecent(limit: number = 4) {
+        const listings = await prisma.listing.findMany({
+            take: limit, // limit le nombre des résultats
+            orderBy: {
+                createdAt: 'desc', // Trie par date de création, du plus récent au plus ancien
+            },
+            include: {
+                photos: {
+                    take: 1,
+                },
+                // Pas besoin des détails de l'hôte pour la carte de la page d'accueil,
+                // mais on pourrait les ajouter si nécessaire.
+            },
+        });
+        return listings;
+    }
 };
