@@ -19,8 +19,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUploader } from './ImageUploader';
-import { LoaderCircle } from 'lucide-react';
+import { CalendarIcon, LoaderCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Calendar } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
+
 
 const amenitiesList = ["Wifi", "Télévision", "Cuisine", "Climatisation", "Piscine", "Parking gratuit", "Salle de sport", "Jacuzzi"];
 
@@ -32,6 +38,8 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
 
     // État pour stocker les objets File bruts sélectionnés par l'utilisateur
     const [imageFiles, setImageFiles] = useState<File[]>([]);
+    // --- AMÉLIORATION : État local pour le calendrier pour une meilleure réactivité de l'UI ---
+    const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
     const form = useForm<CreateListingInput>({
         resolver: zodResolver(createListingSchema),
@@ -41,6 +49,9 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
             amenities: [], maxGuests: 2, bedrooms: 1, bathrooms: 1,
             latitude: -4.325, longitude: 15.3222,
             imageUrls: [],
+            // Initialiser les dates à undefined
+            availableFrom: undefined,
+            availableTo: undefined,
         },
     });
 
@@ -164,6 +175,76 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
                     </FormItem>
                 )} />
 
+                {/* --- CHAMP DE DATE DE DISPONIBILITÉ --- */}
+                <FormField
+                    control={form.control}
+                    name="availableFrom" // Le message d'erreur de Zod s'attachera ici
+                    render={() => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel className={cn((form.formState.errors.availableFrom || form.formState.errors.availableTo) && "text-destructive")}>
+                                Période de disponibilité initiale
+                            </FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn("w-full justify-start text-left font-normal", !dateRange?.from && "text-muted-foreground")}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {dateRange?.from ? (
+                                            dateRange.to ? (
+                                                <>
+                                                    {format(dateRange.from, "dd LLL, y", { locale: fr })} -{" "}
+                                                    {format(dateRange.to, "dd LLL, y", { locale: fr })}
+                                                </>
+                                            ) : (
+                                                format(dateRange.from, "dd LLL, y", { locale: fr })
+                                            )
+                                        ) : (
+                                            <span>Choisissez une plage de dates</span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="range"
+                                        selected={dateRange}
+                                        onSelect={(range) => {
+                                            // 1. Mettre à jour l'état local pour rafraîchir l'UI
+                                            setDateRange(range);
+
+                                            // 2. Mettre à jour le formulaire de manière "type-safe"
+                                            // Si range.from est undefined, on passe `undefined`, sinon on passe la date.
+                                            if (range?.from) {
+                                                form.setValue("availableFrom", range.from);
+                                            }
+                                            if (range?.to) {
+                                                form.setValue("availableTo", range.to);
+                                            }
+
+
+                                            form.trigger("availableFrom");
+                                            form.trigger("availableTo");
+
+
+                                            // 3. Déclencher la validation pour un feedback immédiat
+                                            if (range?.from) form.trigger("availableFrom");
+                                            if (range?.to) form.trigger("availableTo");
+                                        }}
+                                        numberOfMonths={2}
+                                        disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <FormDescription>
+                                Définissez la première plage de dates où votre logement est disponible.
+                            </FormDescription>
+                            {/* Le message d'erreur pour `availableFrom` ou `availableTo` s'affichera ici */}
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
                 {/* --- Champ pour l'upload d'images --- */}
                 <FormField
                     control={form.control}
@@ -183,7 +264,7 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
                         </FormItem>
                     )}
                 />
-                
+
                 <Button type="submit" disabled={isLoading} className="w-full">
                     {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                     {isUploading ? 'Upload des images...' : (isCreating ? 'Finalisation...' : 'Publier le logement')}
