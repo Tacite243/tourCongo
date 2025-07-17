@@ -5,7 +5,7 @@ import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
 import { EmblaOptionsType } from 'embla-carousel';
 import Autoplay from 'embla-carousel-autoplay';
-import { ChevronLeft, ChevronRight, Info, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 

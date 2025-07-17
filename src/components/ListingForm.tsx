@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast as sonnerToast } from "sonner";
 
 import { createListingSchema, CreateListingInput } from '@/lib/utils/validation.schemas';
-import { AppDispatch, RootState } from '@/redux/store';
+import { AppDispatch } from '@/redux/store';
 import { createListing, selectIsCreatingListing } from '@/redux/slices/listingSlice';
 import { compressAndUploadFiles, selectIsUploading } from '@/redux/slices/uploadSlice';
 import { ListingType } from '@prisma/client';

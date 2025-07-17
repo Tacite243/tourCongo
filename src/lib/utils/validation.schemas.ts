@@ -31,6 +31,24 @@ export const createListingSchema = z.object({
     bathrooms: z.coerce.number().int().min(0, "Le nombre de salles de bain ne peut être négatif."),
     // Les URLs des images viendront du state, pas directement du formulaire
     imageUrls: z.array(z.string().url()).optional(),
+    // --- CHAMPS DE DATE ---
+    availableFrom: z.coerce.date({ required_error: "La date de début de disponibilité est requise." }),
+    availableTo: z.coerce.date({ required_error: "La date de fin de disponibilité est requise." }),
+}).refine(data => data.availableTo > data.availableFrom, {
+    message: "La date de fin doit être après la date de début.",
+    path: ["avaiableTo"],
+})
+
+// --- SCHÉMA POUR LA CRÉATION DE RÉSERVATION ---
+export const createBookingSchema = z.object({
+    listingId: z.string().cuid("L'ID du logement est invalide."),
+    startDate: z.coerce.date({ required_error: "La date d'arrivée est requise." }),
+    endDate: z.coerce.date({ required_error: "La date de départ est requise." }),
+}).refine(data => data.endDate > data.startDate, {
+    message: "La date de départ doit être après la date d'arrivée.",
+    path: ["endDate"], // L'erreur sera associée à ce champ
 });
 
+
+export type CreateBookingInput = z.infer<typeof createBookingSchema>
 export type CreateListingInput = z.infer<typeof createListingSchema>;

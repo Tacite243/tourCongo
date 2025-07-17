@@ -3,6 +3,7 @@ import themeReducer from './slices/themeSlice';
 import authReducer from './slices/authSlice';
 import listingReducer from './slices/listingSlice';
 import uploadReducer from './slices/uploadSlice';
+import bookingReducer from './slices/bookingSlice';
 
 
 export const store = configureStore({
@@ -11,6 +12,7 @@ export const store = configureStore({
     auth: authReducer,
     listings: listingReducer,
     upload: uploadReducer,
+    bookings: bookingReducer,
   },
   // middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger), // Optionnel: pour logger les actions
 });

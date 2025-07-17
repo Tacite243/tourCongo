@@ -9,11 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { format, formatISO, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
-import { Calendar as CalendarIcon, Search, Users, MapPin, Minus, Plus } from "lucide-react";
+import { Search, Minus, Plus } from "lucide-react";
 
 interface SearchBarProps {
     // Prop pour déterminer si la barre est en mode compact (dans le header)

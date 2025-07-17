@@ -1,4 +1,3 @@
-// src/components/ImageUploader.tsx
 "use client";
 
 import React, { useCallback, useEffect } from 'react';
@@ -6,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { toast as sonnerToast } from 'sonner';
 import { Button } from './ui/button';
 import Image from 'next/image';
-import { UploadCloud, X, LoaderCircle } from 'lucide-react';
+import { UploadCloud, X } from 'lucide-react';
 
 // Type pour un fichier incluant son URL d'aperçu temporaire
 type FileWithPreview = File & { preview: string };
@@ -41,7 +40,7 @@ export function ImageUploader({ onFilesChange, initialFiles = [] }: ImageUploade
     }, [localFiles, onFilesChange]);
 
     // isDragActive pour le style, isPending pour le feedback de chargement
-    const { getRootProps, getInputProps, isDragActive, isFocused, isDragAccept, isDragReject } = useDropzone({
+    const { getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject } = useDropzone({
         onDrop,
         accept: { 'image/*': ['.jpeg', '.png', '.jpg', '.webp'] },
         maxSize: 5 * 1024 * 1024,

@@ -26,7 +26,7 @@ export const compressAndUploadFiles = createAsyncThunk<
   { rejectValue: string }
 >(
   'upload/compressAndUpload',
-  async (files, { rejectWithValue, dispatch }) => {
+  async (files, { rejectWithValue }) => {
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!;
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
     const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
@@ -38,7 +38,7 @@ export const compressAndUploadFiles = createAsyncThunk<
         maxSizeMB: 1,          // Taille maximale de 1MB
         maxWidthOrHeight: 1920, // Redimensionne si l'image est plus grande
         useWebWorker: true,    // Utilise un worker pour ne pas bloquer l'UI
-        onProgress: (p: number) => { /* Vous pourriez dispatcher une action de progression ici */ }
+        // onProgress: (p: number) => { /* Vous pourriez dispatcher une action de progression ici */ }
       };
       
       const compressionPromises = files.map(file => imageCompression(file, compressionOptions));

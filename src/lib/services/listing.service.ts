@@ -75,7 +75,7 @@ export const listingService = {
         return listings;
     },
     async create(data: CreateListingInput, hostId: string): Promise<Listing> {
-        const { imageUrls, ...listingData } = data;
+        const { imageUrls, availableFrom, availableTo, ...listingData } = data;
         const newListing = await prisma.$transaction(async (tx) => {
             // Etape 1 : créer le logement
             const createdListing = await tx.listing.create({
@@ -98,6 +98,14 @@ export const listingService = {
             // Étape 3 : Créer les enregistrements de photos
             await tx.photo.createMany({
                 data: photoData,
+            });
+            // Étape 4 : Logique de disponibilité
+            await tx.availability.create({
+                data: {
+                    listingId: createdListing.id,
+                    startDate: availableFrom,
+                    endDate: availableTo,
+                }
             });
             // Retourner le logement créé pour confirmation
             return createdListing;
