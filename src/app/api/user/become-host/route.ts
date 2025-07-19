@@ -30,9 +30,10 @@ export async function POST() {
             message: 'Félicitations, vous êtes maintenant un hôte !',
             user: updatedUser,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[BECOME_HOST_API_ERROR]', error);
-        if (error.message.includes('déjà un rôle élevé')) {
+        // Vérification pour accéder à .message en toute sécurité
+        if (error instanceof Error && error.message.includes('déjà un rôle élevé')) {
             return NextResponse.json({ message: error.message }, { status: 400 });
         }
         return NextResponse.json({ message: 'Erreur interne du serveur' }, { status: 500 });

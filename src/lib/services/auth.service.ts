@@ -32,7 +32,7 @@ export const authService = {
             },
         });
 
-        const { password, ...safeUser } = newUser;
+        const { password:_, ...safeUser } = newUser;
         return safeUser;
     },
 
@@ -59,7 +59,7 @@ export const authService = {
             throw new Error('Email ou mot de passe incorrect.');
         }
 
-        const { password, ...safeUser } = user;
+        const { password: _, ...safeUser } = user;
         const token = await generateToken({ id: user.id, email: user.email, role: user.role });
 
         return { user: safeUser, token };
@@ -107,7 +107,7 @@ export const authService = {
         });
 
         // Omettre le mot de passe avant de renvoyer
-        const { password, ...safeUser } = updatedUser;
+        const { password: _, ...safeUser } = updatedUser;
 
         return { user: safeUser, token: newToken };
     },

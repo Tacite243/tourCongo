@@ -46,7 +46,7 @@ function HostDashboardContent() {
 
         return (
             <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Vous n'avez aucune annonce.</p>
+                <p className="text-muted-foreground">Vous n&apos;avez aucune annonce.</p>
                 <Button variant="link" onClick={() => setIsCreateModalOpen(true)} className="mt-2">Créez votre première annonce</Button>
             </div>
         );

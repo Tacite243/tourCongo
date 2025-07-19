@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { Booking } from '@prisma/client';
 import { CreateBookingInput } from '@/lib/utils/validation.schemas';
@@ -46,7 +46,7 @@ const bookingSlice = createSlice({
         state.isCreating = true;
         state.error = null;
       })
-      .addCase(createBooking.fulfilled, (state, action) => {
+      .addCase(createBooking.fulfilled, (state) => {
         state.isCreating = false;
         // On pourrait ajouter la nouvelle réservation à une liste 'myBookings'
       })

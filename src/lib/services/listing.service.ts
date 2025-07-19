@@ -147,10 +147,15 @@ export const listingService = {
             },
             include: {
                 photos: {
-                    take: 1,
+                    take: 1
                 },
-                // Pas besoin des détails de l'hôte pour la carte de la page d'accueil,
-                // mais on pourrait les ajouter si nécessaire.
+                host: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatarUrl: true
+                    }
+                },
             },
         });
         return listings;

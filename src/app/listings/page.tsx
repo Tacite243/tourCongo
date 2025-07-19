@@ -61,7 +61,7 @@ function ListingsContent() {
     }
 
     if (!isLoading && listings.length === 0) {
-      return <div className="text-center py-10"><p className="text-muted-foreground">Aucun logement trouvé. Essayez d'ajuster vos critères de recherche.</p></div>;
+      return <div className="text-center py-10"><p className="text-muted-foreground">Aucun logement trouvé. Essayez d&apos;ajuster vos critères de recherche.</p></div>;
     }
 
     return (

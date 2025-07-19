@@ -1,17 +1,14 @@
-// src/components/BookingPopover.tsx
 "use client";
 
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast as sonnerToast } from 'sonner';
 import { DateRange } from 'react-day-picker';
-import { AppDispatch, RootState } from '@/redux/store';
+import { AppDispatch } from '@/redux/store';
 import { createBooking, selectIsBookingBeingCreated } from '@/redux/slices/bookingSlice';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 interface BookingPopoverProps {
   listingId: string;

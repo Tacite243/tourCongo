@@ -1,8 +1,7 @@
-import type { NextConfig } from "next";
+// next.config.mjs (ou .js)
 
-const nextConfig: NextConfig = {
-  /* config options here */
-  nodeMiddleware: true,
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     remotePatterns: [
       {

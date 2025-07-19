@@ -83,11 +83,11 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
             uploadedUrls = await dispatch(compressAndUploadFiles(imageFiles)).unwrap();
             sonnerToast.success('Images uploadées avec succès !');
 
-        } catch (error: any) {
-            // Si l'upload échoue, on arrête tout et on affiche l'erreur.
+        } catch (error: unknown) {
             console.error("L'upload a échoué :", error);
-            sonnerToast.error(error.message || "L'upload des images a échoué.");
-            return; // Arrêter la fonction ici
+            const message = error instanceof Error ? error.message : "L'upload des images a échoué.";
+            sonnerToast.error(message);
+            return;
         }
 
         // Si on arrive ici, l'upload a réussi et `uploadedUrls` contient les liens.
@@ -104,10 +104,10 @@ export function ListingForm({ onSuccess }: { onSuccess: () => void }) {
             onSuccess(); // Ferme le modal
             router.push('/host/dashboard'); // Redirige
 
-        } catch (error: any) {
-            // Si la création du listing échoue.
+        } catch (error: unknown) {
             console.error("La création du listing a échoué :", error);
-            sonnerToast.error(error.message || "La publication de l'annonce a échoué.");
+            const message = error instanceof Error ? error.message : "La publication de l'annonce a échoué.";
+            sonnerToast.error(message);
         }
     };
 

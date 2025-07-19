@@ -8,16 +8,11 @@ import axios from 'axios';
 
 
 
-// Le type pour un logement récent (peut être plus simple que pour une recherche)
-export type RecentListingResult = Listing & {
-    photos: Photo[];
-};
-
 // Définir l'état pour ce slice
 interface ListingsState {
     listings: ListingSearchResult[]; // Pour les résultats de recherche
     hostListings: HostListingResult[]; // Pour les annonces de l'hôte
-    recentListings: RecentListingResult[]; // Champ pour la page d'accueil
+    recentListings: ListingSearchResult[]; // Champ pour la page d'accueil
     isLoading: boolean;
     isRecentLoading: boolean; // Etat de chargement spécifique pour les récents
     error: string | null;
@@ -49,7 +44,7 @@ const initialState: ListingsState = {
 export const createListing = createAsyncThunk<
     Listing, //type de retour
     CreateListingInput,
-    { rejectValue: { message: string; errors?: any } }
+    { rejectValue: { message: string; errors?: unknown } }
 >(
     'listings/create',
     async (listingData, thunkAPI) => {
@@ -93,8 +88,11 @@ export const searchListings = createAsyncThunk<
 
             const data: ListingSearchResult[] = await response.json();
             return data;
-        } catch (error: any) {
-            return thunkAPI.rejectWithValue(error.message || 'Une erreur réseau est survenue.');
+        } catch (error) {
+            if (error instanceof Error) {
+                return thunkAPI.rejectWithValue(error.message);
+            }
+            return thunkAPI.rejectWithValue('Une erreur réseau est survenue.');
         }
     }
 );
@@ -119,7 +117,7 @@ export const fetchHostListings = createAsyncThunk<
 );
 
 export const fetchRecentListings = createAsyncThunk<
-    RecentListingResult[],
+    ListingSearchResult[],
     void, // Pas d'argument nécessaire
     { rejectValue: string }
 >(
@@ -195,7 +193,7 @@ const listingSlice = createSlice({
             .addCase(fetchRecentListings.pending, (state) => {
                 state.isRecentLoading = true;
             })
-            .addCase(fetchRecentListings.fulfilled, (state, action: PayloadAction<RecentListingResult[]>) => {
+            .addCase(fetchRecentListings.fulfilled, (state, action: PayloadAction<ListingSearchResult[]>) => {
                 state.isRecentLoading = false;
                 state.recentListings = action.payload;
             })

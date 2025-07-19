@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, type FileRejection, type FileError } from 'react-dropzone';
 import { toast as sonnerToast } from 'sonner';
 import { Button } from './ui/button';
 import Image from 'next/image';
@@ -20,21 +20,21 @@ export function ImageUploader({ onFilesChange, initialFiles = [] }: ImageUploade
         initialFiles.map(file => Object.assign(file, { preview: URL.createObjectURL(file) }))
     );
 
-    const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
-        console.log('[ImageUploader] onDrop a été appelé !');
+    const onDrop = useCallback((acceptedFiles: File[], fileRejections: FileRejection[]) => {
+        // console.log('[ImageUploader] onDrop a été appelé !');
         if (fileRejections.length > 0) {
             fileRejections.forEach(({ errors }) => {
-                errors.forEach((err: any) => sonnerToast.error(err.message));
+                errors.forEach((err: FileError) => sonnerToast.error(err.message));
             });
             return;
         };
-        console.log('[ImageUploader] Fichiers acceptés:', acceptedFiles);
+        // console.log('[ImageUploader] Fichiers acceptés:', acceptedFiles);
 
         const newFilesWithPreview = acceptedFiles.map(file => Object.assign(file, { preview: URL.createObjectURL(file) }));
         const updatedFiles = [...localFiles, ...newFilesWithPreview];
         setLocalFiles(updatedFiles);
-        
-        console.log('[ImageUploader] Appel de onFilesChange avec', updatedFiles.length, 'fichiers.');
+
+        // console.log('[ImageUploader] Appel de onFilesChange avec', updatedFiles.length, 'fichiers.');
         onFilesChange(updatedFiles);
 
     }, [localFiles, onFilesChange]);
@@ -63,7 +63,7 @@ export function ImageUploader({ onFilesChange, initialFiles = [] }: ImageUploade
                 <div className="text-center">
                     <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                     <p className="mt-2 text-sm text-muted-foreground">Glissez-déposez ou cliquez ici</p>
-                    <p className="text-xs text-muted-foreground/80">PNG, JPG, WEBP jusqu'à 5MB</p>
+                    <p className="text-xs text-muted-foreground/80">PNG, JPG, WEBP jusqu&apos;à 5MB</p>
                 </div>
             </div>
 
